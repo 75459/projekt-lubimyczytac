@@ -87,6 +87,7 @@ celerybeat.pid
 # RabbitMQ
 mnesia/
 rabbitmq/
+TODO.txt
 rabbitmq-data/
 # ActiveMQ
 activemq-data/
