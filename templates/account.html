@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-12">
+    <div class="bg-white rounded-3xl p-8 border border-border-main shadow-soft transition-all duration-300">
+
+        <div id="authTabs" class="flex bg-slate-100 p-1 rounded-xl mb-8">
+            <button onclick="switchTab('login')" id="tab-login" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer bg-white text-fg-main shadow-soft-sm">
+                Logowanie
+            </button>
+            <button onclick="switchTab('register')" id="tab-register" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer text-muted-fg hover:text-fg-main">
+                Rejestracja
+            </button>
+        </div>
+
+        <div id="loginSection" class="space-y-5">
+            <div class="text-center md:text-left mb-4">
+                <h2 class="text-xl font-bold text-fg-main tracking-tight">Witaj ponownie</h2>
+                <p class="text-xs text-muted-fg mt-1">Zaloguj się</p>
+            </div>
+            <form action="/login" method="POST" id="loginForm" class="space-y-4 m-0" novalidate>
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Identyfikator</label>
+                    <input type="text" name="identity" placeholder="Login, pseudonim lub e-mail" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block">Hasło</label>
+                    </div>
+                    <input type="password" name="password" placeholder="••••••••" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+
+                <div id="loginMainFeedback" class="text-[11px] font-bold text-red-500 text-center hidden mt-2"></div>
+
+                <button type="submit" class="w-full h-11 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm pt-0.5">
+                    Zaloguj się
+                </button>
+            </form>
+            <div class="text-center pt-2">
+                <button onclick="switchTab('reset')" class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-0 transition-colors uppercase tracking-wider">
+                    Przywracanie hasła
+                </button>
+            </div>
+        </div>
+
+        <div id="registerSection" class="hidden space-y-5">
+            <div class="text-center md:text-left mb-4">
+                <h2 class="text-xl font-bold text-fg-main tracking-tight">Utwórz konto</h2>
+                <p class="text-xs text-muted-fg mt-1">Dołącz do społeczności i twórz własną historie</p>
+            </div>
+            <form action="/register" method="POST" id="mainRegisterForm" class="space-y-4 m-0" novalidate>
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block">Login</label>
+                        <span id="loginFeedback" class="text-[11px] font-semibold transition-all"></span>
+                    </div>
+                    <input type="text" id="regLogin" name="login" placeholder="np. jkowalski" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block">Pseudonim wyświetlany</label>
+                        <span id="usernameFeedback" class="text-[11px] font-semibold transition-all"></span>
+                    </div>
+                    <input type="text" id="regUsername" name="username" placeholder="np. Janek" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block">E-mail</label>
+                        <span id="emailFeedback" class="text-[11px] font-semibold transition-all"></span>
+                    </div>
+                    <input type="email" id="regEmail" name="mail" placeholder="user@example.com" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Hasło</label>
+                    <div class="relative">
+                        <input type="password" id="regPassword" name="password" placeholder="••••••••" required maxlength="255"
+                               class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40 pr-12">
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                            <input type="checkbox" id="showPasswordToggle" class="w-4 h-4 rounded border-border-main text-fg-main focus:ring-0 cursor-pointer">
+                        </div>
+                    </div>
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+
+                    <div class="flex justify-between items-center mt-1.5 px-1">
+                        <label for="showPasswordToggle" class="text-[11px] font-medium text-muted-fg cursor-pointer select-none">Pokaż tekst hasła</label>
+                        <span id="passwordMainFeedback" class="text-[11px] font-bold text-red-500"></span>
+                    </div>
+
+                    <div class="mt-3 bg-slate-50 border border-border-main rounded-xl p-3 space-y-1.5">
+                        <div id="req-length" class="flex items-center gap-2 text-xs text-muted-fg font-medium transition-colors">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-muted-fg/40 transition-colors"></span> Minimum 8 znaków
+                        </div>
+                        <div id="req-upper" class="flex items-center gap-2 text-xs text-muted-fg font-medium transition-colors">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-muted-fg/40 transition-colors"></span> Przynajmniej jedna wielka litera
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="regSubmitBtn" class="w-full h-11 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm pt-0.5">
+                    Zarejestruj konto
+                </button>
+            </form>
+        </div>
+
+        <div id="verifySection" class="hidden space-y-6">
+            <div class="text-center md:text-left">
+                <h2 class="text-xl font-bold text-fg-main tracking-tight">Weryfikacja konta</h2>
+                <p class="text-xs text-muted-fg mt-2 leading-relaxed">
+                    Wysłaliśmy 6-znakowy kod weryfikacyjny na adres:<br>
+                    <strong id="displayTargetEmail" class="text-fg-main font-bold break-all block mt-1 text-sm bg-slate-50 p-2 rounded-xl border border-border-main">mail@example.com</strong>
+                </p>
+                <p class="text-[11px] text-amber-600 font-semibold mt-2 flex items-center gap-1 justify-center md:justify-start">
+                    ⚠️ W razie braku wiadomości, sprawdź folder SPAM.
+                </p>
+            </div>
+
+            <form action="/verify_code" method="POST" id="otpSubmitForm" class="space-y-6 m-0" novalidate>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block text-center">Wpisz kod weryfikacyjny</label>
+                    <div class="flex justify-center gap-2.5" id="otpInputsContainer">
+                        <input type="text" maxlength="1" required class="otp-field w-10 h-12 text-center text-xl font-bold text-fg-main bg-transparent border-b-2 border-slate-400 focus:border-primary focus:outline-none transition-all uppercase">
+                        <input type="text" maxlength="1" required class="otp-field w-10 h-12 text-center text-xl font-bold text-fg-main bg-transparent border-b-2 border-slate-400 focus:border-primary focus:outline-none transition-all uppercase">
+                        <input type="text" maxlength="1" required class="otp-field w-10 h-12 text-center text-xl font-bold text-fg-main bg-transparent border-b-2 border-slate-400 focus:border-primary focus:outline-none transition-all uppercase">
+                        <input type="text" maxlength="1" required class="otp-field w-10 h-12 text-center text-xl font-bold text-fg-main bg-transparent border-b-2 border-slate-400 focus:border-primary focus:outline-none transition-all uppercase">
+                        <input type="text" maxlength="1" required class="otp-field w-10 h-12 text-center text-xl font-bold text-fg-main bg-transparent border-b-2 border-slate-400 focus:border-primary focus:outline-none transition-all uppercase">
+                        <input type="text" maxlength="1" required class="otp-field w-10 h-12 text-center text-xl font-bold text-fg-main bg-transparent border-b-2 border-slate-400 focus:border-primary focus:outline-none transition-all uppercase">
+                    </div>
+                    <input type="hidden" name="full_code" id="hiddenFullCode" maxlength="6">
+                    <span id="otpErrorGrid" class="error-warning text-red-500 text-xs hidden text-center font-medium mt-1">Wprowadź kompletny 6-znakowy kod!</span>
+                </div>
+
+                <button type="submit" class="w-full h-11 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm pt-0.5">
+                    Zatwierdź i przejdź dalej
+                </button>
+            </form>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-border-main text-xs font-semibold">
+                <button type="button" onclick="returnToRegisterToEditEmail()" class="text-link-color hover:underline cursor-pointer bg-transparent border-0 transition-all">
+                    ✏️ Zmień adres e-mail
+                </button>
+
+                <button type="button" id="resendCodeBtn" onclick="triggerCodeResend()" disabled class="text-muted-fg bg-transparent border-0 transition-all duration-200 cursor-not-allowed">
+                    Wyślij jeszcze raz <span id="resendCountdown">(60)</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="resetSection" class="hidden space-y-5">
+            <div class="text-center md:text-left mb-4">
+                <h2 class="text-xl font-bold text-fg-main tracking-tight">Odzyskaj dostęp</h2>
+                <p class="text-xs text-muted-fg mt-1">Podaj swój adres e-mail, a system wyśle 6-cyfrowy kod weryfikacyjny.</p>
+            </div>
+            <form action="/reset_password_request" method="POST" id="resetForm" class="space-y-4 m-0" novalidate>
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Adres e-mail</label>
+                    <input type="email" id="resetEmailField" name="mail" placeholder="user@example.com" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+
+                <button type="submit" class="w-full h-11 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm pt-0.5">
+                    Wyślij kod weryfikacyjny
+                </button>
+            </form>
+            <div class="text-center pt-2">
+                <button onclick="switchTab('login')" class="text-xs font-bold uppercase tracking-wider text-muted-fg hover:text-fg-main transition-colors cursor-pointer bg-transparent border-0">
+                    ← Powrót do logowania
+                </button>
+            </div>
+        </div>
+
+        <div id="newPasswordSection" class="hidden space-y-5">
+            <div class="text-center md:text-left mb-4">
+                <h2 class="text-xl font-bold text-fg-main tracking-tight">Resetowanie hasła</h2>
+                <p class="text-xs text-muted-fg mt-1">Wprowadź i powtórz nowe hasło zabezpieczające profil.</p>
+            </div>
+            <form action="/reset_password_final" method="POST" id="newPasswordForm" class="space-y-4 m-0" novalidate>
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Nowe hasło</label>
+                    <input type="password" id="newPassword" name="password" placeholder="••••••••" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Powtórz nowe hasło</label>
+                    <input type="password" id="newPasswordConfirm" placeholder="••••••••" required maxlength="255"
+                           class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                    <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Hasła muszą być identyczne!</span>
+                </div>
+
+                <div id="newPasswordFeedback" class="text-[11px] font-bold text-red-500 text-center"></div>
+
+                <div class="mt-3 bg-slate-50 border border-border-main rounded-xl p-3 space-y-1.5">
+                    <div id="req-length-new" class="flex items-center gap-2 text-xs text-muted-fg font-medium transition-colors">
+                        <span class="dot w-1.5 h-1.5 rounded-full bg-muted-fg/40 transition-colors"></span> Minimum 8 znaków
+                    </div>
+                    <div id="req-upper-new" class="flex items-center gap-2 text-xs text-muted-fg font-medium transition-colors">
+                        <span class="dot w-1.5 h-1.5 rounded-full bg-muted-fg/40 transition-colors"></span> Przynajmniej jedna wielka litera
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full h-11 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm pt-0.5">
+                    Zapisz
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let typingTimer;
+    const doneTypingInterval = 450;
+    let countdownInterval = null;
+    let secondsLeft = 60;
+
+    function switchTab(target) {
+        const loginSec = document.getElementById('loginSection');
+        const registerSec = document.getElementById('registerSection');
+        const resetSec = document.getElementById('resetSection');
+        const verifySec = document.getElementById('verifySection');
+        const newPassSec = document.getElementById('newPasswordSection');
+        const authTabs = document.getElementById('authTabs');
+
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+
+        document.querySelectorAll('input').forEach(input => {
+            input.classList.remove('border-2', 'border-red-500');
+            if (input.classList.contains('otp-field')) {
+                input.style.borderColor = '#94a3b8';
+                input.value = '';
+            }
+        });
+        document.querySelectorAll('.error-warning').forEach(span => {
+            span.classList.add('hidden');
+        });
+        document.getElementById('passwordMainFeedback').textContent = "";
+        document.getElementById('newPasswordFeedback').textContent = "";
+        document.getElementById('loginMainFeedback').classList.add('hidden');
+
+        loginSec.classList.add('hidden');
+        registerSec.classList.add('hidden');
+        resetSec.classList.add('hidden');
+        verifySec.classList.add('hidden');
+        newPassSec.classList.add('hidden');
+        authTabs.classList.remove('hidden');
+
+        if (target === 'login') {
+            loginSec.classList.remove('hidden');
+            tabLogin.className = "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer bg-white text-fg-main shadow-soft-sm";
+            tabRegister.className = "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer text-muted-fg hover:text-fg-main";
+        } else if (target === 'register') {
+            registerSec.classList.remove('hidden');
+            tabRegister.className = "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer bg-white text-fg-main shadow-soft-sm";
+            tabLogin.className = "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer text-muted-fg hover:text-fg-main";
+        } else if (target === 'reset') {
+            resetSec.classList.remove('hidden');
+            authTabs.classList.add('hidden');
+        } else if (target === 'verify') {
+            verifySec.classList.remove('hidden');
+            authTabs.classList.add('hidden');
+            startResendCountdown();
+        } else if (target === 'new_password') {
+            newPassSec.classList.remove('hidden');
+            authTabs.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('showPasswordToggle').addEventListener('change', function () {
+        document.getElementById('regPassword').type = this.checked ? 'text' : 'password';
+    });
+
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function () {
+            this.classList.remove('border-2', 'border-red-500');
+            if (this.classList.contains('otp-field')) this.style.borderColor = '#6b8fa3';
+
+            const warningMsg = this.id === 'regPassword' ? this.closest('.relative').nextElementSibling : this.nextElementSibling;
+            if (warningMsg && warningMsg.classList.contains('error-warning')) {
+                warningMsg.classList.add('hidden');
+            }
+            document.getElementById('loginMainFeedback').classList.add('hidden');
+        });
+    });
+
+    function validateFormInputs(form) {
+        let isValid = true;
+        const requiredInputs = form.querySelectorAll('[required]:not(.otp-field)');
+
+        requiredInputs.forEach(input => {
+            const warningMsg = input.id === 'regPassword' ? input.closest('.relative').nextElementSibling : input.nextElementSibling;
+            let isFieldInvalid = false;
+
+            if (!input.value.trim()) {
+                isFieldInvalid = true;
+                if (warningMsg) warningMsg.textContent = "Wypełnij wartość!";
+            } else if (input.id === 'regEmail' || input.id === 'resetEmailField') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(input.value.trim())) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Błędny format e-mail!";
+                }
+            } else if (input.id === 'regPassword' || input.id === 'newPassword') {
+                const val = input.value;
+                if (val.length < 8 || !/[A-Z]/.test(val)) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Hasło nie spełnia wymagań!";
+                }
+            }
+
+            if (input.id === 'newPasswordConfirm') {
+                const mainPass = document.getElementById('newPassword').value;
+                if (input.value !== mainPass) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Hasła muszą być identyczne!";
+                }
+            }
+
+            if (isFieldInvalid) {
+                input.classList.add('border-2', 'border-red-500');
+                if (warningMsg) warningMsg.classList.remove('hidden');
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    // --- ASYNCHRONICZNE LOGOWANIE (CUSTOMOWE BŁĘDY) ---
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (validateFormInputs(this)) {
+            const formData = new FormData(this);
+            const response = await fetch('/login', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = '/'; // Powrót do strony głównej po poprawnym zalogowaniu
+            } else {
+                if (data.requires_verification) {
+                    document.getElementById('displayTargetEmail').textContent = data.mail;
+                    switchTab('verify');
+                } else {
+                    // Wyświetlenie całkowicie customowego powiadomienia (czerwone ramki + napis)
+                    this.querySelectorAll('input').forEach(input => input.classList.add('border-2', 'border-red-500'));
+                    const feedback = document.getElementById('loginMainFeedback');
+                    feedback.textContent = data.message;
+                    feedback.classList.remove('hidden');
+                }
+            }
+        }
+    });
+
+    document.getElementById('mainRegisterForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (validateFormInputs(this)) {
+            const formData = new FormData(this);
+            const response = await fetch('/register', { method: 'POST', body: formData });
+            if (response.ok) {
+                document.getElementById('displayTargetEmail').textContent = document.getElementById('regEmail').value.trim();
+                switchTab('verify');
+            }
+        }
+    });
+
+    // --- ASYNCHRONICZNY RESET (CUSTOMOWE RAMKI DLA BŁĘDU 404) ---
+    document.getElementById('resetForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (validateFormInputs(this)) {
+            const formData = new FormData(this);
+            const response = await fetch('/reset_password_request', { method: 'POST', body: formData });
+            if (response.ok) {
+                document.getElementById('displayTargetEmail').textContent = document.getElementById('resetEmailField').value.trim();
+                switchTab('verify');
+            } else {
+                const data = await response.json();
+                const emailInput = document.getElementById('resetEmailField');
+                const warningMsg = emailInput.nextElementSibling;
+
+                // Przypisanie customowych stylów zamiast natywnego okna przeglądarki
+                emailInput.classList.add('border-2', 'border-red-500');
+                if (warningMsg) {
+                    warningMsg.textContent = data.message;
+                    warningMsg.classList.remove('hidden');
+                }
+            }
+        }
+    });
+
+    const otpFields = document.querySelectorAll('.otp-field');
+    const hiddenFullCode = document.getElementById('hiddenFullCode');
+    const otpErrorGrid = document.getElementById('otpErrorGrid');
+
+    otpFields.forEach((field, idx) => {
+        field.addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            this.style.borderColor = '#6b8fa3';
+            otpErrorGrid.classList.add('hidden');
+
+            if (this.value.length === 1 && idx < otpFields.length - 1) {
+                otpFields[idx + 1].focus();
+            }
+            combineOtpValues();
+        });
+
+        field.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && this.value.length === 0 && idx > 0) {
+                otpFields[idx - 1].focus();
+                otpFields[idx - 1].value = '';
+                combineOtpValues();
+            }
+        });
+    });
+
+    function combineOtpValues() {
+        let code = "";
+        otpFields.forEach(f => code += f.value);
+        hiddenFullCode.value = code;
+    }
+
+    document.getElementById('otpSubmitForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        combineOtpValues();
+        if (hiddenFullCode.value.length !== 6) {
+            otpErrorGrid.textContent = "Wprowadź kompletny 6-znakowy kod!";
+            otpErrorGrid.classList.remove('hidden');
+            otpFields.forEach(f => { if (!f.value) f.style.borderColor = '#ef4444'; });
+            return;
+        }
+
+        const formData = new FormData(this);
+        const response = await fetch('/verify_code', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.target === 'home') {
+                window.location.href = '/';
+            } else if (data.target === 'new_password') {
+                switchTab('new_password');
+            }
+        } else {
+            otpErrorGrid.textContent = data.message;
+            otpErrorGrid.classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('newPasswordForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (validateFormInputs(this)) {
+            const formData = new FormData(this);
+            const response = await fetch('/reset_password_final', { method: 'POST', body: formData });
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                document.getElementById('newPasswordFeedback').textContent = "Błąd zapisu hasła.";
+            }
+        }
+    });
+
+    function returnToRegisterToEditEmail() {
+        switchTab('register');
+        if (countdownInterval) clearInterval(countdownInterval);
+    }
+
+    function startResendCountdown() {
+        if (countdownInterval) clearInterval(countdownInterval);
+        secondsLeft = 60;
+        const resendBtn = document.getElementById('resendCodeBtn');
+        const counterSpan = document.getElementById('resendCountdown');
+
+        resendBtn.disabled = true;
+        resendBtn.className = "text-muted-fg bg-transparent border-0 cursor-not-allowed text-xs";
+        counterSpan.textContent = `(${secondsLeft})`;
+        counterSpan.classList.remove('hidden');
+
+        countdownInterval = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+                clearInterval(countdownInterval);
+                counterSpan.classList.add('hidden');
+                resendBtn.disabled = false;
+                resendBtn.className = "text-link-color hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-0 font-bold text-xs transition-colors";
+            } else {
+                counterSpan.textContent = `(${secondsLeft})`;
+            }
+        }, 1000);
+    }
+
+    function triggerCodeResend() {
+        startResendCountdown();
+        const targetMail = document.getElementById('regEmail').value.trim() || document.getElementById('resetEmailField').value.trim();
+        fetch(`/api/resend_verification_code?mail=${encodeURIComponent(targetMail)}`).catch(() => { });
+    }
+
+    function monitorPasswordLive(inputField, lengthLabel, upperLabel) {
+        inputField.addEventListener('input', function () {
+            const val = this.value;
+            let isLenOk = val.length >= 8;
+            let isUpOk = /[A-Z]/.test(val);
+
+            lengthLabel.className = isLenOk ? "flex items-center gap-2 text-xs text-green-600 font-bold" : "flex items-center gap-2 text-xs text-muted-fg font-medium";
+            lengthLabel.querySelector('.dot').className = isLenOk ? "dot w-1.5 h-1.5 rounded-full bg-green-600" : "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
+
+            upperLabel.className = isUpOk ? "flex items-center gap-2 text-xs text-green-600 font-bold" : "flex items-center gap-2 text-xs text-muted-fg font-medium";
+            upperLabel.querySelector('.dot').className = isUpOk ? "dot w-1.5 h-1.5 rounded-full bg-green-600" : "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
+        });
+    }
+
+    monitorPasswordLive(document.getElementById('regPassword'), document.getElementById('req-length'), document.getElementById('req-upper'));
+    monitorPasswordLive(document.getElementById('newPassword'), document.getElementById('req-length-new'), document.getElementById('req-upper-new'));
+
+    async function apiCheck(endpoint, paramName, value, feedbackElem, inputElem) {
+        if (!value.trim()) { feedbackElem.textContent = ""; return; }
+        feedbackElem.textContent = "⏳ sprawdzanie...";
+        feedbackElem.className = "text-[11px] font-semibold text-blue-500";
+
+        try {
+            const response = await fetch(`/api/${endpoint}?${paramName}=${encodeURIComponent(value)}`);
+            const data = await response.json();
+            if (data.exists) {
+                feedbackElem.textContent = "❌ zajęty";
+                feedbackElem.className = "text-[11px] font-semibold text-red-500";
+                inputElem.classList.add('border-2', 'border-red-500');
+            } else {
+                feedbackElem.textContent = "✓ dostępny";
+                feedbackElem.className = "text-[11px] font-semibold text-green-500";
+                inputElem.classList.remove('border-2', 'border-red-500');
+            }
+        } catch (e) { feedbackElem.textContent = ""; }
+    }
+
+    const regLogin = document.getElementById('regLogin');
+    regLogin.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => apiCheck('check_login', 'login', regLogin.value, document.getElementById('loginFeedback'), regLogin), doneTypingInterval);
+    });
+
+    const regUsername = document.getElementById('regUsername');
+    regUsername.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => apiCheck('check_username', 'username', regUsername.value, document.getElementById('usernameFeedback'), regUsername), doneTypingInterval);
+    });
+
+    const regEmail = document.getElementById('regEmail');
+    regEmail.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => apiCheck('check_email', 'mail', regEmail.value, document.getElementById('emailFeedback'), regEmail), doneTypingInterval);
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'register') switchTab('register');
+    });
+</script>
+{% endblock %}

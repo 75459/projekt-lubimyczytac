@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-3xl p-8 border border-border-main shadow-soft space-y-6">
+
+        <div class="border-b border-border-main pb-6">
+            <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-md bg-card-lavender text-fg-main border border-border-main inline-block mb-2">Wydawnictwo</span>
+            <h1 class="text-2xl md:text-3xl font-bold text-fg-main tracking-tight">{{ publisher.name }}</h1>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-border-main/60">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">E-mail</span>
+                <span class="text-sm font-semibold text-fg-main block mt-1">{{ publisher.mail or "Brak danych" }}</span>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-border-main/60">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Strona WWW</span>
+                <span class="text-sm font-semibold text-fg-main block mt-1">{{ publisher.webpage or "Brak danych" }}</span>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-border-main/60 sm:col-span-2">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Adres</span>
+                <span class="text-sm font-semibold text-fg-main block mt-1">{{ publisher.address or "Brak danych" }}</span>
+            </div>
+        </div>
+
+        <div class="space-y-4 pt-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-fg">Wydane książki</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for book in publisher.books %}
+                <a href="/book/{{ book.id }}" class="p-4 bg-white rounded-2xl border border-border-main hover:border-primary transition-colors shadow-sm block group">
+                    <h4 class="font-bold text-sm text-fg-main group-hover:text-primary transition-colors">{{ book.title }}</h4>
+                </a>
+                {% else %}
+                <p class="text-sm text-muted-fg col-span-2">Brak przypisanych książek.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if current_user and current_user.admin == 2 and publisher.id != 1 %}
+        <div class="pt-4 border-t border-border-main mt-6">
+            <button onclick="document.getElementById('deletePublisherModal').classList.remove('hidden')" class="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-100 transition-colors cursor-pointer">
+                🗑️ Usuń wydawnictwo
+            </button>
+        </div>
+
+        <div id="deletePublisherModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/20 backdrop-blur-sm transition-all" onclick="if(event.target === this) this.classList.add('hidden')">
+            <div class="relative w-full max-w-md mx-4 bg-white rounded-3xl p-6 shadow-xl border border-border-main" onclick="event.stopPropagation();">
+                <h3 class="text-lg font-bold text-fg-main mb-2">Decyzja o powiązanych pozycjach</h3>
+                <p class="text-sm text-muted-fg mb-6">To wydawnictwo posiada przypisane książki. Wybierz akcję, jaką system ma wykonać na powiązanych elementach:</p>
+
+                <form action="/delete_publisher/{{ publisher.id }}" method="POST" class="space-y-3 m-0">
+                    <label class="flex items-center gap-3 p-3 bg-slate-50 border border-border-main rounded-xl cursor-pointer hover:bg-slate-100/70 transition-all">
+                        <input type="radio" name="mode" value="set_unknown" checked class="w-4 h-4 text-slate-700 focus:ring-0">
+                        <div class="text-xs">
+                            <span class="block font-bold text-fg-main">Ustaw jako "Nieznane" (Zalecane)</span>
+                            <span class="text-muted-fg">Książki pozostaną w bazie, ich wydawnictwo zmieni się na pozycję domyślną.</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-red-50/30 border border-red-100 rounded-xl cursor-pointer hover:bg-red-50/60 transition-all">
+                        <input type="radio" name="mode" value="cascade" class="w-4 h-4 text-red-600 focus:ring-0">
+                        <div class="text-xs">
+                            <span class="block font-bold text-red-600">Usuń trwale wszystkie książki</span>
+                            <span class="text-muted-fg">Spowoduje kaskadowe, bezpowrotne wyczyszczenie powiązanych pozycji.</span>
+                        </div>
+                    </label>
+                    <div class="flex gap-3 pt-3 border-t border-border-main mt-4">
+                        <button type="button" onclick="document.getElementById('deletePublisherModal').classList.add('hidden')" class="flex-1 h-10 text-xs font-bold uppercase rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
+                        <button type="submit" class="flex-1 h-10 text-xs font-bold uppercase rounded-xl bg-red-500 text-white shadow-sm hover:bg-red-600 cursor-pointer">Potwierdź i usuń</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

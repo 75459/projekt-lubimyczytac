@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-3xl p-8 border border-border-main shadow-soft space-y-8">
+
+        <div class="flex flex-col md:flex-row gap-8 border-b border-border-main pb-8">
+            <div class="shrink-0 mx-auto md:mx-0 w-48 h-72 bg-slate-50 rounded-2xl shadow-soft-sm overflow-hidden border border-border-main relative flex items-center justify-center group">
+                {% if book.isbn %}
+                <img src="https://covers.openlibrary.org/b/isbn/{{ book.isbn|replace('-', '') }}-L.jpg" alt="Okładka" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display='none'; document.getElementById('cover-fallback').style.display='flex';">
+                <div id="cover-fallback" class="absolute inset-0 flex-col items-center justify-center hidden p-4 text-center bg-slate-50">
+                    <span class="text-4xl mb-2">📚</span>
+                    <span class="text-[10px] font-bold text-muted-fg uppercase tracking-wider">Brak okładki w API</span>
+                </div>
+                {% else %}
+                <div class="flex flex-col items-center justify-center w-full h-full p-4 text-center">
+                    <span class="text-4xl mb-2">📚</span>
+                    <span class="text-[10px] font-bold text-muted-fg uppercase tracking-wider">Brak ISBN</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center text-center md:text-left">
+                <div>
+                    {% if book.genre %}
+                    {% if book.genre.id == 1 %}
+                    <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-md bg-slate-100 text-muted-fg border border-border-main inline-block mb-3 cursor-default pointer-events-none select-none">{{ book.genre.name }}</span>
+                    {% else %}
+                    <a href="/genre/{{ book.genre.id }}" class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-md bg-card-lavender text-fg-main border border-border-main inline-block mb-3 hover:opacity-80">{{ book.genre.name }}</a>
+                    {% endif %}
+                    {% endif %}
+                    <h1 class="text-3xl md:text-4xl font-bold text-fg-main tracking-tight leading-tight">{{ book.title }}</h1>
+                    <p class="text-base text-muted-fg mt-2">
+                        Autor:
+                        {% if book.author %}
+                        {% if book.author.id == 1 %}
+                        <span class="font-semibold text-muted-fg cursor-default pointer-events-none select-none">{{ book.author.name }} {{ book.author.surname }}</span>
+                        {% else %}
+                        <a href="/author/{{ book.author.id }}" class="text-link-color font-semibold hover:underline">{{ book.author.name }} {{ book.author.surname }}</a>
+                        {% endif %}
+                        {% else %}
+                        <span class="font-semibold text-muted-fg">Nieznany</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mt-6 inline-block bg-slate-50 px-5 py-3 rounded-2xl border border-border-main/60 self-center md:self-start">
+                    <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Data publikacji</span>
+                    <span class="text-sm font-semibold text-fg-main block mt-1">{{ book.pub_date.strftime('%Y-%m-%d') if book.pub_date else "Brak danych" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="p-4 bg-card-blue rounded-2xl border border-border-main/60">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Numer ISBN</span>
+                <span class="text-xs font-mono font-bold text-fg-main block mt-1 break-all">{{ book.isbn or "Brak" }}</span>
+            </div>
+            <div class="p-4 bg-card-mint rounded-2xl border border-border-main/60">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Liczba stron</span>
+                <span class="text-sm font-bold text-fg-main block mt-1">{{ book.pages_number or "Nieznana" }}</span>
+            </div>
+            <div class="p-4 bg-card-peach rounded-2xl border border-border-main/60">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Język wydania</span>
+                <span class="text-sm font-bold text-fg-main block mt-1 capitalize">{{ book.language or "Polski" }}</span>
+            </div>
+            <div class="p-4 bg-card-cream rounded-2xl border border-border-main/60">
+                <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Wydawnictwo</span>
+                <span class="text-sm font-bold text-fg-main block mt-1 truncate">
+                    {% if book.publisher %}
+                    {% if book.publisher.id == 1 %}
+                    <span class="text-muted-fg cursor-default pointer-events-none select-none">{{ book.publisher.name }}</span>
+                    {% else %}
+                    <a href="/pubhouse/{{ book.publisher.id }}" class="text-link-color hover:underline">{{ book.publisher.name }}</a>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-muted-fg">Nieznane</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="space-y-2 pt-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-fg">Opis pozycji</h3>
+            <p class="text-sm text-fg-main leading-relaxed bg-slate-50 p-5 rounded-2xl border border-border-main/80 whitespace-pre-line">{{ book.desc or "Ta książka nie posiada jeszcze opisu." }}</p>
+        </div>
+{% if current_user and current_user.admin == 2 %}
+        <div class="flex gap-3 pt-4 border-t border-border-main mt-6">
+            <button onclick="document.getElementById('editBookModal').classList.remove('hidden')" class="px-4 py-2 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm">✏️ Edytuj książkę</button>
+            <button onclick="document.getElementById('deleteModal').classList.remove('hidden')" class="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-100 transition-colors cursor-pointer">🗑️ Usuń książkę</button>
+        </div>
+
+        <div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/20 backdrop-blur-sm transition-all" onclick="if(event.target === this) this.classList.add('hidden')">
+            <div class="relative w-full max-w-sm mx-4 bg-white rounded-3xl p-6 shadow-xl border border-border-main text-center" onclick="event.stopPropagation();">
+                <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-fg-main mb-2">Potwierdź usunięcie</h3>
+                <p class="text-sm text-muted-fg mb-6">Czy na pewno chcesz bezpowrotnie usunąć tę książkę?</p>
+                <div class="flex gap-3">
+                    <button type="button" onclick="document.getElementById('deleteModal').classList.add('hidden')" class="flex-1 px-4 py-2.5 text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer">Anuluj</button>
+                    <form action="/delete_book/{{ book.id }}" method="POST" class="flex-1 m-0">
+                        <button type="submit" class="w-full px-4 py-2.5 text-sm font-semibold bg-red-500 text-white hover:bg-red-600 rounded-xl transition-colors cursor-pointer text-center shadow-sm">Usuń trwale</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="editBookModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) this.classList.add('hidden')">
+            <div class="relative w-full max-w-xl mx-4 bg-white rounded-3xl p-8 shadow-2xl border border-border-main max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation();">
+                <h2 class="text-xl font-bold mb-4 text-fg-main">Edytuj dane książki</h2>
+
+                <form action="/edit_book/{{ book.id }}" method="POST" id="editBookForm" class="space-y-4" novalidate>
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Tytuł</label>
+                        <input type="text" name="title" value="{{ book.title }}" class="w-full h-10 px-3 bg-card-blue rounded-xl border border-border-main text-sm text-fg-main" required maxlength="255">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-sm font-medium block mb-1">Autor</label>
+                            <select name="author_id" class="w-full h-10 px-2 bg-card-peach rounded-xl border border-border-main text-sm cursor-pointer text-fg-main" required>
+                                {% for author in global_authors %}
+                                <option value="{{ author.id }}" {% if book.author_id == author.id %}selected{% endif %}>{{ author.name }} {{ author.surname }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium block mb-1">Wydawnictwo</label>
+                            <select name="pub_house_id" class="w-full h-10 px-2 bg-card-lavender rounded-xl border border-border-main text-sm cursor-pointer text-fg-main" required>
+                                {% for pub in global_publishers %}
+                                <option value="{{ pub.id }}" {% if book.pub_house_id == pub.id %}selected{% endif %}>{{ pub.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium block mb-1">Gatunek</label>
+                            <select name="genre_id" class="w-full h-10 px-2 bg-card-cream rounded-xl border border-border-main text-sm cursor-pointer text-fg-main" required>
+                                {% for genre in global_genres %}
+                                <option value="{{ genre.id }}" {% if book.genre_id == genre.id %}selected{% endif %}>{{ genre.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium block mb-1">Liczba stron</label>
+                            <input type="number" name="pages_number" value="{{ book.pages_number }}" min="1" class="w-full h-10 px-3 bg-card-blue rounded-xl border border-border-main text-sm text-fg-main" required>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium block mb-1">Język</label>
+                            <input type="text" name="language" value="{{ book.language }}" class="w-full h-10 px-3 bg-card-mint rounded-xl border border-border-main text-sm text-fg-main" required maxlength="255">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Opis (max 255 zn.)</label>
+                        <textarea name="desc" maxlength="255" class="w-full min-h-[100px] p-3 bg-card-blue/50 rounded-xl border border-border-main text-sm text-fg-main" required>{{ book.desc }}</textarea>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" onclick="document.getElementById('editBookModal').classList.add('hidden')" class="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
+                        <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold shadow-soft-sm">Zapisz zmiany</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-3xl p-8 border border-border-main shadow-soft space-y-6">
+
+        <div class="border-b border-border-main pb-6">
+            <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-md bg-card-peach text-fg-main border border-border-main inline-block mb-2">Autor</span>
+            <h1 class="text-2xl md:text-3xl font-bold text-fg-main tracking-tight">{{ author.name }} {{ author.surname }}</h1>
+        </div>
+
+        <div class="space-y-2 pt-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-fg">Biografia</h3>
+            <p class="text-sm text-fg-main leading-relaxed bg-slate-50 p-5 rounded-2xl border border-border-main/80 whitespace-pre-line">{{ author.bio or "Brak biografii w bazie." }}</p>
+        </div>
+
+        <div class="space-y-4 pt-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-fg">Książki tego autora</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for book in author.books %}
+                <a href="/book/{{ book.id }}" class="p-4 bg-white rounded-2xl border border-border-main hover:border-primary transition-colors shadow-sm block group">
+                    <h4 class="font-bold text-sm text-fg-main group-hover:text-primary transition-colors">{{ book.title }}</h4>
+                </a>
+                {% else %}
+                <p class="text-sm text-muted-fg col-span-2">Brak przypisanych książek.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if current_user and current_user.admin == 2 and author.id != 1 %}
+        <div class="pt-4 border-t border-border-main mt-6">
+            <button onclick="document.getElementById('deleteAuthorModal').classList.remove('hidden')" class="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-100 transition-colors cursor-pointer">🗑️ Usuń autora</button>
+        </div>
+
+        <div id="deleteAuthorModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/20 backdrop-blur-sm transition-all" onclick="if(event.target === this) this.classList.add('hidden')">
+            <div class="relative w-full max-w-md mx-4 bg-white rounded-3xl p-6 shadow-xl border border-border-main" onclick="event.stopPropagation();">
+                <h3 class="text-lg font-bold text-fg-main mb-2">Decyzja o powiązanych pozycjach</h3>
+                <form action="/delete_author/{{ author.id }}" method="POST" class="space-y-3 m-0">
+                    <label class="flex items-center gap-3 p-3 bg-slate-50 border border-border-main rounded-xl cursor-pointer">
+                        <input type="radio" name="mode" value="set_unknown" checked>
+                        <span class="text-xs font-bold text-fg-main">Ustaw jako "Nieznane"</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 bg-red-50/30 border border-red-100 rounded-xl cursor-pointer">
+                        <input type="radio" name="mode" value="cascade">
+                        <span class="text-xs font-bold text-red-600">Usuń trwale wszystkie książki</span>
+                    </label>
+                    <div class="flex gap-3 pt-3 mt-4">
+                        <button type="button" onclick="document.getElementById('deleteAuthorModal').classList.add('hidden')" class="flex-1 h-10 text-xs font-bold bg-gray-100 rounded-xl">Anuluj</button>
+                        <button type="submit" class="flex-1 h-10 text-xs font-bold bg-red-500 text-white rounded-xl">Potwierdź</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-3xl p-8 border border-border-main shadow-soft space-y-6">
+        
+        <div class="border-b border-border-main pb-6">
+            <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-md bg-card-blue text-fg-main border border-border-main inline-block mb-2">
+                Dokumentacja projektu
+            </span>
+            <h1 class="text-2xl md:text-3xl font-bold text-fg-main tracking-tight">Regulamin Serwisu Księgarnia</h1>
+            <p class="text-xs text-muted-fg mt-1">Ostatnia aktualizacja: 18 maja 2026 r.</p>
+        </div>
+
+        <div class="space-y-6 text-sm text-fg-main leading-relaxed">
+            
+            <div class="space-y-2">
+                <h2 class="text-base font-bold text-fg-main tracking-tight">§1. Postanowienia ogólne</h2>
+                <p>
+                    1. Niniejszy regulamin określa zasady korzystania z serwisu internetowego <strong>Księgarnia</strong>, będącego autorską, akademicką aplikacją katalogującą zbiory literackie.<br>
+                    2. Serwis ma charakter wyłącznie **demonstracyjny i dydaktyczny** (projekt semestralny z przedmiotu Wprowadzenie do technologii internetowych) i nie prowadzi realnej działalności komercyjnej ani handlowej.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-base font-bold text-fg-main tracking-tight">§2. Wymagania techniczne</h2>
+                <p>
+                    Do prawidłowego korzystania z zasobów serwisu wymagane jest urządzenie z dostępem do sieci Internet, poprawnie skonfigurowana przeglądarka stron www (np. Google Chrome, Mozilla Firefox, Microsoft Edge) z włączoną obsługą języka **JavaScript** oraz aktywny moduł sesji (cookies).
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-base font-bold text-fg-main tracking-tight">§3. Rejestracja i autoryzacja kont</h2>
+                <p>
+                    1. Rejestracja w serwisie jest dobrowolna i darmowa. Wymaga wprowadzenia unikalnego loginu, pseudonimu wyświetlanego oraz adresu e-mail, których długość nie może przekraczać 255 znaków.<br>
+                    2. Aktywacja konta następuje po wprowadzeniu 6-znakowego alfanumerycznego kodu weryfikacyjnego generowanego automatycznie przez system.<br>
+                    3. Użytkownik jest zobowiązany do zachowania poufności hasła dostępu. Zabrania się wprowadzania do systemu treści o charakterze bezprawnym, złośliwego oprogramowania oraz prób nieautoryzowanego modyfikowania bazy danych.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-base font-bold text-fg-main tracking-tight">§4. Prawa autorskie</h2>
+                <p>
+                    1. Struktura bazy danych, kod źródłowy aplikacji (Flask/Python), interfejs graficzny zaimplementowany w standardzie Soft UI oraz autorskie mechanizmy walidacji stanowią własność intelektualną twórcy projektu.<br>
+                    2. Miniatury okładek oraz niektóre metadane pozycji literackich mogą być pobierane w czasie rzeczywistym z zewnętrznych, otwartych repozytoriów API (np. OpenLibrary) i stanowią własność ich prawnych autorów.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-base font-bold text-fg-main tracking-tight">§5. Ograniczenie odpowiedzialności (Zastrzeżenie deweloperskie)</h2>
+                <p class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-2xl text-xs font-medium">
+                    ⚠️ <strong>UWAGA:</strong> Z uwagi na prototypowy i testowy status aplikacji, administrator nie gwarantuje ciągłości działania serwisu, stabilności połączenia z bazą danych, ani bezpowrotnego zapisu wprowadzonych informacji. System działa w trybie piaskownicy deweloperskiej (Sandbox Mode), a wszelkie kody weryfikacyjne i mechanizmy szyfrujące służą wyłącznie celom prezentacji technologii.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-base font-bold text-fg-main tracking-tight">§6. Ochrona danych osobowych (RODO)</h2>
+                <p>
+                    Wszelkie dane wprowadzane podczas rejestracji (fikcyjne bądź realne adresy e-mail) są przetwarzane lokalnie i wyłącznie na potrzeby symulacji działania mechanizmów autoryzacyjnych sesji. Dane te nie są profilowane, nie są wykorzystywane w celach marketingowych i zostaną trwale usunięte wraz z bazą danych po zakończeniu cyklu oceny akademickiej projektu.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="flex justify-between items-center pt-6 border-t border-border-main text-xs font-semibold text-muted-fg">
+            <span>Księgarnia © 2026</span>
+            <button onclick="window.history.back()" class="text-link-color hover:underline bg-transparent border-0 cursor-pointer">
+                ← Powrót do serwisu
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

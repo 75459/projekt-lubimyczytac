@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Księgarnia - Projekt Semestralny</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-main': '#f8f9fa',
+                        'fg-main': '#344767',
+                        'border-main': '#e9ecef',
+                        'card-blue': '#eef3f6',
+                        'card-mint': '#eff6f3',
+                        'card-peach': '#f8f2ee',
+                        'card-lavender': '#f3f0f6',
+                        'card-cream': '#f6f5ef',
+                        'primary': '#6b8fa3',
+                        'secondary': '#f2f0e9',
+                        'muted-fg': '#67748e',
+                        'link-color': '#5a7f94'
+                    },
+                    boxShadow: {
+                        'soft': '0 20px 27px 0 rgba(0, 0, 0, 0.05)',
+                        'soft-sm': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #344767;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row antialiased">
+
+    <aside class="w-full md:w-64 bg-white md:bg-transparent shrink-0 flex flex-col md:sticky md:top-0 md:h-screen z-40 p-4 border-b md:border-b-0 border-border-main">
+
+        <div class="w-full h-full bg-white md:rounded-3xl border border-border-main md:shadow-soft flex flex-col overflow-hidden">
+
+            <div class="h-[76px] flex items-center px-6 border-b border-border-main shrink-0 justify-between md:justify-start">
+                <a href="/" class="text-xl font-bold tracking-tight text-fg-main hover:text-primary transition-colors">
+                    KSIĘGARNIA
+                </a>
+            </div>
+
+            <nav class="flex-1 p-4 flex flex-col gap-5 overflow-y-auto">
+
+                <div>
+                    <span class="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-fg/70 block mb-2">Główne</span>
+                    <div class="space-y-1.5">
+                        <a href="/" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {% if request.path == '/' %} bg-slate-100 text-fg-main shadow-soft-sm {% else %} text-muted-fg hover:bg-slate-50 hover:text-fg-main {% endif %}">
+                            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-soft-sm shrink-0">
+                                <svg class="w-4 h-4 text-fg-main" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            </div>
+                            <span>Katalog główny</span>
+                        </a>
+                        <a href="/about" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {% if request.path == '/about' %} bg-slate-100 text-fg-main shadow-soft-sm {% else %} text-muted-fg hover:bg-slate-50 hover:text-fg-main {% endif %}">
+                            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-soft-sm shrink-0">
+                                <svg class="w-4 h-4 text-fg-main" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <span>O projekcie</span>
+                        </a>
+                    </div>
+                </div>
+
+                {% if current_user and current_user.admin == 2 %}
+                <div>
+                    <span class="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-fg/70 block mb-2">Narzędzia</span>
+                    <button onclick="fillRandomISBN()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100/80 transition-all border border-amber-100 text-left cursor-pointer shadow-soft-sm">
+                        <div class="w-8 h-8 rounded-lg bg-white border border-amber-200 flex items-center justify-center text-sm shrink-0">🎲</div>
+                        <span>Losowy ISBN</span>
+                    </button>
+                </div>
+                {% endif %}
+                {% if current_user and current_user.admin == 2 %}
+                <div>
+                    <span class="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-fg/70 block mb-2">Baza danych</span>
+                    <div class="space-y-2">
+                        <button onclick="openModal('bookModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-tl from-slate-700 to-slate-800 shadow-soft-sm hover:opacity-95 transition-all text-left cursor-pointer">
+                            <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">+</div>
+                            <span>Dodaj książkę</span>
+                        </button>
+
+                        <button onclick="openModal('authorModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-tl from-slate-700 to-slate-800 shadow-soft-sm hover:opacity-95 transition-all text-left cursor-pointer">
+                            <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">+</div>
+                            <span>Dodaj autora</span>
+                        </button>
+
+                        <button onclick="openModal('publisherModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-tl from-slate-700 to-slate-800 shadow-soft-sm hover:opacity-95 transition-all text-left cursor-pointer">
+                            <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">+</div>
+                            <span>Dodaj wydawnictwo</span>
+                        </button>
+
+                        <button onclick="openModal('genreModal')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-tl from-slate-700 to-slate-800 shadow-soft-sm hover:opacity-95 transition-all text-left cursor-pointer">
+                            <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">+</div>
+                            <span>Dodaj gatunek</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+            </nav>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0 p-4">
+
+        {% if request.path != '/account' %}
+        <header class="bg-white/80 backdrop-blur-md border border-border-main rounded-2xl sticky top-4 z-30 shadow-soft h-[72px] px-6 shrink-0 mb-6">
+            <div class="flex items-center justify-between h-full w-full max-w-7xl mx-auto">
+
+                <div class="flex flex-1 items-center gap-8">
+                    {% if request.path != '/' %}
+                    <button onclick="window.history.back()" class="hidden lg:flex items-center gap-2 text-xs font-bold text-fg-main bg-white hover:bg-slate-50 transition-all duration-300 px-4 py-2.5 rounded-xl shadow-soft-sm border border-border-main cursor-pointer uppercase tracking-wider shrink-0">
+                        ← Wróć
+                    </button>
+                    {% endif %}
+
+                    <div class="relative w-full max-w-md">
+                        <form action="/search" method="GET" id="searchForm" class="flex gap-2 w-full">
+                            <input type="text" id="searchInput" name="fraza" placeholder="Wpisz frazę..." autocomplete="off"
+                                   class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm shadow-inner text-fg-main placeholder:text-muted-fg/60">
+                            <button type="submit" class="h-10 px-5 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm shrink-0">
+                                Szukaj
+                            </button>
+                        </form>
+                        <div id="searchDropdown" class="absolute left-0 right-0 mt-2 bg-white rounded-xl border border-border-main shadow-lg hidden z-50 overflow-hidden">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 ml-4">
+                    {% if current_user %}
+                    <a href="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-fg-main hover:bg-slate-200/80 transition-all shadow-soft-sm shrink-0">
+                        <div class="w-5 h-5 rounded-md bg-gradient-to-tl from-slate-700 to-slate-800 text-white flex items-center justify-center text-[10px] font-bold shadow-soft-sm uppercase">
+                            {{ current_user.username[:1] }}
+                        </div>
+                        <span>Profil</span>
+                    </a>
+                    <div class="h-4 w-[1px] bg-border-main"></div>
+                    <a href="/logout" class="text-[11px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 transition-all px-2 whitespace-nowrap">
+                        Wyloguj się
+                    </a>
+                    {% else %}
+                    <a href="/account" class="text-[11px] font-bold uppercase tracking-wider text-muted-fg hover:text-fg-main transition-all px-2">
+                        Logowanie
+                    </a>
+                    <div class="h-4 w-[1px] bg-border-main"></div>
+                    <a href="/account?action=register" class="text-[11px] font-bold uppercase tracking-wider text-muted-fg hover:text-fg-main transition-all px-2 whitespace-nowrap">
+                        Rejestracja
+                    </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </header>
+        {% endif %}
+
+        <main class="flex-1">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="mt-8 bg-white/40 border border-border-main rounded-2xl py-5 px-6 shadow-soft-sm shrink-0">
+            <div class="max-w-7xl mx-auto">
+                <p class="text-center text-xs font-semibold text-muted-fg">
+                    Projekt semestralny - Wprowadzenie do technologii internetowych. Wykonał: Jakub Kowalczyk (indeks: 75459).
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <div id="bookModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) closeModal('bookModal')">
+        <div class="relative w-full max-w-xl mx-4 bg-white rounded-3xl p-8 shadow-2xl border border-border-main max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation();">
+            <h2 class="text-xl font-bold mb-4">Dodaj nową książkę</h2>
+            <form action="/add_book" method="POST" id="addBookForm" onsubmit="event.preventDefault(); handleAddBook(this);" class="space-y-4" novalidate>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Tytuł</label>
+                        <input type="text" name="title" class="w-full h-10 px-3 bg-card-blue rounded-xl border border-border-main text-sm" required>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium block mb-1">ISBN</label>
+                        <input type="text" id="isbnInput" name="isbn" placeholder="np. 978-83-08..." class="w-full h-10 px-3 bg-card-mint rounded-xl border border-border-main text-sm font-mono" required>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                    </div>
+                </div>
+
+                <div id="isbnAutofillAlert" class="hidden bg-card-blue border border-border-main p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="text-sm flex-1">
+                        <span id="autofillStatus" class="block font-bold text-fg-main">⏳ Szukam danych...</span>
+                        <span id="discoveredBookTitle" class="text-xs text-muted-fg italic block mt-0.5">Tytuł: ...</span>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" id="btnIgnoreIsbn" class="px-3 py-1.5 text-xs font-medium bg-white border border-border-main text-gray-700 rounded-lg cursor-pointer hover:bg-gray-50">Zamknij</button>
+                        <button type="button" id="btnApplyIsbn" class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg shadow-sm cursor-pointer hover:opacity-90">Zastosuj</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Autor</label>
+                        <select name="author_id" class="w-full h-10 px-2 bg-card-peach rounded-xl border border-border-main text-sm cursor-pointer" required>
+                            <option value="">Wybierz...</option>
+                            {% for author in global_authors %}
+                            <option value="{{ author.id }}">{{ author.name }} {{ author.surname }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Wydawnictwo</label>
+                        <select name="pub_house_id" class="w-full h-10 px-2 bg-card-lavender rounded-xl border border-border-main text-sm cursor-pointer" required>
+                            <option value="">Wybierz...</option>
+                            {% for pub in global_publishers %}
+                            <option value="{{ pub.id }}">{{ pub.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Gatunek</label>
+                        <select name="genre_id" class="w-full h-10 px-2 bg-card-cream rounded-xl border border-border-main text-sm cursor-pointer" required>
+                            <option value="">Wybierz...</option>
+                            {% for genre in global_genres %}
+                            <option value="{{ genre.id }}">{{ genre.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Data pub.</label>
+                        <input type="date" name="pub_date" class="w-full h-10 px-3 bg-card-cream rounded-xl border border-border-main text-sm" required>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Liczba stron</label>
+                        <input type="number" name="pages_number" min="1" placeholder="np. 340" class="w-full h-10 px-3 bg-card-blue rounded-xl border border-border-main text-sm" required>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Język</label>
+                        <input type="text" name="language" placeholder="np. polski" class="w-full h-10 px-3 bg-card-mint rounded-xl border border-border-main text-sm" required>
+                        <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium block mb-1">Opis (max 255 zn.)</label>
+                    <textarea name="desc" maxlength="255" class="w-full min-h-[70px] p-3 bg-card-blue/50 rounded-xl border border-border-main text-sm" required></textarea>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('bookModal')" class="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
+                    <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold shadow-soft-sm">Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="authorModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) closeModal('authorModal')">
+        <div class="relative w-full max-w-md mx-4 bg-white rounded-3xl p-8 shadow-2xl border border-border-main" onclick="event.stopPropagation();">
+            <h2 class="text-xl font-bold mb-4">Dodaj nowego autora</h2>
+            <form action="/add_author" method="POST" onsubmit="event.preventDefault(); handleAddAuthor(this);" class="space-y-4" novalidate>
+                <div>
+                    <label class="text-sm font-medium block mb-1">Imię</label>
+                    <input type="text" name="name" class="w-full h-10 px-3 bg-card-blue rounded-xl border border-border-main" required>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div>
+                    <label class="text-sm font-medium block mb-1">Nazwisko</label>
+                    <input type="text" name="surname" class="w-full h-10 px-3 bg-card-mint rounded-xl border border-border-main" required>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div>
+                    <label class="text-sm font-medium block mb-1">Biografia (max 255 zn.)</label>
+                    <textarea name="bio" maxlength="255" class="w-full min-h-[70px] p-3 bg-card-cream rounded-xl border border-border-main text-sm" required></textarea>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('authorModal')" class="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
+                    <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold">Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="publisherModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) closeModal('publisherModal')">
+        <div class="relative w-full max-w-md mx-4 bg-white rounded-3xl p-8 shadow-2xl border border-border-main" onclick="event.stopPropagation();">
+            <h2 class="text-xl font-bold mb-4">Dodaj nowe wydawnictwo</h2>
+            <form action="/add_publisher" method="POST" onsubmit="event.preventDefault(); handleAddPublisher(this);" class="space-y-4" novalidate>
+                <div>
+                    <label class="text-sm font-medium block mb-1">Nazwa wydawnictwa</label>
+                    <input type="text" name="name" class="w-full h-10 px-3 bg-card-blue rounded-xl border border-border-main" required>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div>
+                    <label class="text-sm font-medium block mb-1">Adres</label>
+                    <input type="text" name="address" class="w-full h-10 px-3 bg-card-mint rounded-xl border border-border-main" required>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('publisherModal')" class="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
+                    <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold">Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="genreModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) closeModal('genreModal')">
+        <div class="relative w-full max-w-md mx-4 bg-white rounded-3xl p-8 shadow-2xl border border-border-main" onclick="event.stopPropagation();">
+            <h2 class="text-xl font-bold mb-4">Dodaj nowy gatunek</h2>
+            <form action="/add_genre" method="POST" onsubmit="event.preventDefault(); handleAddGenre(this);" class="space-y-4" novalidate>
+                <div>
+                    <label class="text-sm font-medium block mb-1">Nazwa gatunku</label>
+                    <input type="text" name="name" class="w-full h-10 px-3 bg-card-lavender rounded-xl border border-border-main" required>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('genreModal')" class="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
+                    <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold">Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="duplicateModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden bg-black/20 backdrop-blur-sm" onclick="if(event.target === this) closeDuplicateModal()">
+        <div class="relative w-full max-w-sm mx-4 bg-white rounded-3xl p-6 shadow-xl border border-border-main text-center transition-all" onclick="event.stopPropagation();">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-fg-main mb-2">Książka już istnieje!</h3>
+            <p class="text-sm text-muted-fg mb-6">W bazie znaleźliśmy już pozycję o tym numerze ISBN:<br><strong id="duplicateTitle" class="text-fg-main mt-1 block">Tytuł</strong></p>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeDuplicateModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-colors cursor-pointer">Anuluj</button>
+                <a id="duplicateLink" href="#" class="flex-1 px-4 py-2.5 text-sm font-semibold bg-sky-50 text-sky-600 hover:bg-sky-100 rounded-xl transition-colors cursor-pointer text-center">Przejdź do książki</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="validationAlertModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden bg-black/20 backdrop-blur-sm" onclick="closeValidationAlertModal()">
+        <div class="relative w-full max-w-sm mx-4 bg-white rounded-3xl p-6 shadow-xl border border-border-main text-center transition-all" onclick="event.stopPropagation();">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 id="validationAlertTitle" class="text-lg font-bold text-fg-main mb-2"></h3>
+            <p id="validationAlertMessage" class="text-sm text-muted-fg mb-6"></p>
+            <button type="button" onclick="closeValidationAlertModal()" class="w-full px-4 py-2.5 text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer">Zamknij</button>
+        </div>
+    </div>
+
+    <script>
+        let tempBookData = null;
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.add('hidden');
+
+            const form = modal.querySelector('form');
+            if (form) {
+                form.reset();
+                const inputs = form.querySelectorAll('[required]');
+                inputs.forEach(input => {
+                    input.classList.remove('border-2', 'border-red-500');
+                    const warningMsg = input.nextElementSibling;
+                    if (warningMsg) warningMsg.classList.add('hidden');
+                });
+            }
+
+            if (id === 'bookModal') {
+                const autofillAlert = document.getElementById('isbnAutofillAlert');
+                if (autofillAlert) autofillAlert.classList.add('hidden');
+                tempBookData = null;
+            }
+        }
+
+        async function fillRandomISBN() {
+            try {
+                const response = await fetch('/api/random_isbn');
+                const data = await response.json();
+
+                if (data.success && data.isbn) {
+                    openModal('bookModal');
+                    const isbnInput = document.getElementById('isbnInput');
+                    if (isbnInput) {
+                        isbnInput.value = data.isbn;
+                        isbnInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function validateForm(form) {
+            let isValid = true;
+            const inputs = form.querySelectorAll('[required]');
+            inputs.forEach(input => {
+                const warningMsg = input.nextElementSibling;
+                let isFieldInvalid = false;
+
+                if (!input.value.trim()) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Wypełnij zawartość!";
+                } else if (input.name === 'pages_number' && parseInt(input.value) <= 0) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Musi być większa niż 0!";
+                }
+
+                if (isFieldInvalid) {
+                    input.classList.add('border-2', 'border-red-500');
+                    if (warningMsg) warningMsg.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    input.classList.remove('border-2', 'border-red-500');
+                    if (warningMsg) warningMsg.classList.add('hidden');
+                }
+            });
+            return isValid;
+        }
+
+        function closeDuplicateModal() {
+            document.getElementById('duplicateModal').classList.add('hidden');
+        }
+
+        function closeValidationAlertModal() {
+            document.getElementById('validationAlertModal').classList.add('hidden');
+        }
+
+        function showValidationAlert(title, message) {
+            document.getElementById('validationAlertTitle').textContent = title;
+            document.getElementById('validationAlertMessage').textContent = message;
+            document.getElementById('validationAlertModal').classList.remove('hidden');
+        }
+
+        async function handleAddBook(form) {
+            if (!validateForm(form)) return;
+            const isbnInput = form.querySelector('input[name="isbn"]').value;
+            try {
+                const response = await fetch(`/api/check_isbn?isbn=${encodeURIComponent(isbnInput)}`);
+                const data = await response.json();
+                if (data.exists) {
+                    document.getElementById('duplicateTitle').textContent = data.title;
+                    document.getElementById('duplicateLink').href = `/book/${data.id}`;
+                    document.getElementById('duplicateModal').classList.remove('hidden');
+                } else {
+                    form.submit();
+                }
+            } catch (error) {
+                form.submit();
+            }
+        }
+
+        async function handleAddAuthor(form) {
+            if (!validateForm(form)) return;
+            const name = form.querySelector('input[name="name"]').value;
+            const surname = form.querySelector('input[name="surname"]').value;
+            try {
+                const response = await fetch(`/api/check_author?name=${encodeURIComponent(name)}&surname=${encodeURIComponent(surname)}`);
+                const data = await response.json();
+                if (data.exists) {
+                    showValidationAlert("Autor już istnieje", "W bazie danych znajduje się już osoba o tym imieniu i nazwisku.");
+                } else {
+                    form.submit();
+                }
+            } catch (error) {
+                form.submit();
+            }
+        }
+
+        async function handleAddPublisher(form) {
+            if (!validateForm(form)) return;
+            const name = form.querySelector('input[name="name"]').value;
+            try {
+                const response = await fetch(`/api/check_publisher?name=${encodeURIComponent(name)}`);
+                const data = await response.json();
+                if (data.exists) {
+                    showValidationAlert("Wydawnictwo już istnieje", "W bazie danych znajduje się już wydawnictwo o takiej nazwie.");
+                } else {
+                    form.submit();
+                }
+            } catch (error) {
+                form.submit();
+            }
+        }
+
+        async function handleAddGenre(form) {
+            if (!validateForm(form)) return;
+            const name = form.querySelector('input[name="name"]').value;
+            try {
+                const response = await fetch(`/api/check_genre?name=${encodeURIComponent(name)}`);
+                const data = await response.json();
+                if (data.exists) {
+                    showValidationAlert("Gatunek już istnieje", "W bazie danych znajduje się już przypisany gatunek o takiej nazwie.");
+                } else {
+                    form.submit();
+                }
+            } catch (error) {
+                form.submit();
+            }
+        }
+
+        function matchOrCreateSelectOption(selectElement, apiValue) {
+            if (!selectElement || !apiValue) return;
+            const normalizedApi = apiValue.trim().toLowerCase();
+            let matchedValue = null;
+            for (let option of selectElement.options) {
+                if (option.text.trim().toLowerCase() === normalizedApi) {
+                    matchedValue = option.value;
+                    break;
+                }
+            }
+            if (matchedValue) {
+                selectElement.value = matchedValue;
+            } else {
+                const tempOption = document.createElement('option');
+                tempOption.value = `NEW:${apiValue}`;
+                tempOption.text = apiValue;
+                selectElement.appendChild(tempOption);
+                selectElement.value = tempOption.value;
+            }
+        }
+
+        function parseGoogleDate(raw) {
+            if (!raw) return "";
+            if (raw.length === 4) return raw + "-01-01";
+            if (raw.length === 7) return raw + "-01";
+            if (raw.length >= 10) return raw.substring(0, 10);
+            return "";
+        }
+
+        function parseOpenLibraryDate(raw) {
+            if (!raw) return "";
+            let match = raw.match(/\d{4}/);
+            if (match) return match[0] + "-01-01";
+            return "";
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const isbnInput = document.getElementById('isbnInput');
+            const autofillAlert = document.getElementById('isbnAutofillAlert');
+            const autofillStatus = document.getElementById('autofillStatus');
+            const discoveredTitleSpan = document.getElementById('discoveredBookTitle');
+            const btnApply = document.getElementById('btnApplyIsbn');
+            const btnIgnore = document.getElementById('btnIgnoreIsbn');
+
+            if (isbnInput) {
+                isbnInput.addEventListener('input', async function () {
+                    let val = this.value.replace(/\D/g, '');
+                    if (val.length > 13) val = val.substring(0, 13);
+
+                    let formatted = '';
+                    if (val.length > 0) formatted += val.substring(0, 3);
+                    if (val.length > 3) formatted += '-' + val.substring(3, 5);
+                    if (val.length > 5) formatted += '-' + val.substring(5, 7);
+                    if (val.length > 7) formatted += '-' + val.substring(7, 12);
+                    if (val.length > 12) formatted += '-' + val.substring(12, 13);
+
+                    this.value = formatted;
+
+                    if (val.length === 13) {
+                        try {
+                            if (autofillAlert) autofillAlert.classList.remove('hidden');
+                            if (autofillStatus) autofillStatus.textContent = "⏳ Szukam w bazach danych...";
+                            if (discoveredTitleSpan) {
+                                discoveredTitleSpan.textContent = "Sprawdzam Google Books i OpenLibrary...";
+                                discoveredTitleSpan.className = "text-xs text-blue-600 font-medium block mt-1";
+                            }
+                            if (btnApply) btnApply.classList.add('hidden');
+
+                            let bookFound = false;
+                            let bTitle = "", bPages = "", bAuthors = [], bPubs = [], bSubj = [], bDate = "", bDesc = "";
+
+                            let res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${val}`);
+                            let data = await res.json();
+
+                            if (!data.items || data.items.length === 0) {
+                                res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${val}`);
+                                data = await res.json();
+                            }
+
+                            if (data.items && data.items.length > 0) {
+                                const info = data.items[0].volumeInfo;
+                                bTitle = info.title || "";
+                                bPages = info.pageCount || "";
+                                bAuthors = info.authors ? info.authors.map(a => ({ name: a })) : [];
+                                bPubs = info.publisher ? [{ name: info.publisher }] : [];
+                                bSubj = info.categories ? [{ name: info.categories[0] }] : [];
+                                bDate = parseGoogleDate(info.publishedDate);
+                                bDesc = (info.description || "").replace(/<[^>]*>?/gm, '').trim();
+                                bookFound = true;
+                            } else {
+                                let olRes = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${val}&format=json&jscmd=data`);
+                                let olData = await olRes.json();
+                                let olKey = `ISBN:${val}`;
+                                if (olData && olData[olKey]) {
+                                    const info = olData[olKey];
+                                    bTitle = info.title || "";
+                                    bPages = info.number_of_pages || "";
+                                    bAuthors = info.authors || [];
+                                    bPubs = info.publishers || [];
+                                    bSubj = info.subjects || [];
+                                    bDate = parseOpenLibraryDate(info.publish_date);
+                                    let rawDesc = info.description || "";
+                                    if (typeof rawDesc === 'object') rawDesc = rawDesc.value || "";
+                                    bDesc = rawDesc.replace(/<[^>]*>?/gm, '').trim();
+                                    bookFound = true;
+                                }
+                            }
+
+                            if (bookFound && bTitle) {
+                                if (bDesc.length > 255) bDesc = bDesc.substring(0, 252) + "...";
+                                tempBookData = {
+                                    title: bTitle,
+                                    number_of_pages: bPages,
+                                    pub_date: bDate,
+                                    desc: bDesc,
+                                    authors: bAuthors,
+                                    publishers: bPubs,
+                                    subjects: bSubj
+                                };
+                                if (autofillStatus) autofillStatus.textContent = "✨ Znaleziono!";
+                                if (discoveredTitleSpan) {
+                                    discoveredTitleSpan.textContent = `Tytuł: "${tempBookData.title}"`;
+                                    discoveredTitleSpan.className = "text-sm text-green-600 font-bold block mt-1";
+                                }
+                                if (btnApply) btnApply.classList.remove('hidden');
+                            } else {
+                                tempBookData = null;
+                                if (autofillStatus) autofillStatus.textContent = "❌ Brak w bazach";
+                                if (discoveredTitleSpan) {
+                                    discoveredTitleSpan.textContent = "Nie znaleziono ISBN w globalnych bazach.";
+                                    discoveredTitleSpan.className = "text-xs text-red-500 font-medium block mt-1";
+                                }
+                                if (btnApply) btnApply.classList.add('hidden');
+                            }
+                        } catch (error) {
+                            if (autofillStatus) autofillStatus.textContent = "❌ Błąd połączenia";
+                        }
+                    } else {
+                        if (autofillAlert) autofillAlert.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (btnApply) {
+                btnApply.addEventListener('click', function () {
+                    const formToFill = btnApply.closest('form');
+                    if (tempBookData && formToFill) {
+                        const tInput = formToFill.querySelector('input[name="title"]');
+                        if (tInput && tempBookData.title) tInput.value = tempBookData.title;
+                        const pInput = formToFill.querySelector('input[name="pages_number"]');
+                        if (pInput && tempBookData.number_of_pages) pInput.value = tempBookData.number_of_pages;
+                        const dateInput = formToFill.querySelector('input[name="pub_date"]');
+                        if (dateInput && tempBookData.pub_date) dateInput.value = tempBookData.pub_date;
+                        const dInput = formToFill.querySelector('textarea[name="desc"]');
+                        if (dInput) dInput.value = tempBookData.desc ? tempBookData.desc : "Brak opisu.";
+                        const lInput = formToFill.querySelector('input[name="language"]');
+                        if (lInput) lInput.value = "polski";
+
+                        const authSel = formToFill.querySelector('select[name="author_id"]');
+                        if (authSel && tempBookData.authors && tempBookData.authors.length > 0) {
+                            matchOrCreateSelectOption(authSel, tempBookData.authors[0].name);
+                        }
+                        const pubSel = formToFill.querySelector('select[name="pub_house_id"]');
+                        if (pubSel && tempBookData.publishers && tempBookData.publishers.length > 0) {
+                            matchOrCreateSelectOption(pubSel, tempBookData.publishers[0].name);
+                        }
+                        const genSel = formToFill.querySelector('select[name="genre_id"]');
+                        if (genSel && tempBookData.subjects && tempBookData.subjects.length > 0) {
+                            matchOrCreateSelectOption(genSel, tempBookData.subjects[0].name);
+                        }
+                    }
+                    if (autofillAlert) autofillAlert.classList.add('hidden');
+                });
+            }
+
+            if (btnIgnore && autofillAlert) {
+                btnIgnore.addEventListener('click', function () {
+                    autofillAlert.classList.add('hidden');
+                    tempBookData = null;
+                });
+            }
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+
+        if (searchInput && searchDropdown) {
+            searchInput.addEventListener('input', async function () {
+                const query = this.value.trim();
+                if (query.length < 1) {
+                    searchDropdown.classList.add('hidden');
+                    return;
+                }
+                const response = await fetch(`/api/search_suggest?q=${encodeURIComponent(query)}`);
+                const items = await response.json();
+                if (items.length === 0) {
+                    searchDropdown.classList.add('hidden');
+                    return;
+                }
+                searchDropdown.innerHTML = '';
+                items.forEach(item => {
+                    const row = document.createElement('a');
+                    row.href = item.url;
+                    row.className = "block px-4 py-2.5 text-sm border-b border-gray-100 text-left hover:bg-slate-50 transition-colors text-fg-main";
+                    row.innerHTML = item.text;
+                    searchDropdown.appendChild(row);
+                });
+                searchDropdown.classList.remove('hidden');
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (searchInput && searchDropdown && !searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

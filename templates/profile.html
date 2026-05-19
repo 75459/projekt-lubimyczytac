@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    header {
+        display: none !important;
+    }
+</style>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
+
+        <div class="md:col-span-2 bg-white rounded-3xl p-6 border border-border-main shadow-soft text-center space-y-4">
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white flex items-center justify-center text-3xl font-bold shadow-soft uppercase tracking-wider">
+                {{ current_user.username[:1] }}
+            </div>
+            <div>
+                <h3 id="cardDisplayUsername" class="text-lg font-bold text-fg-main tracking-tight">{{ current_user.username }}</h3>
+                <p class="text-xs text-muted-fg mt-0.5">Użytkownik systemu</p>
+            </div>
+            <div class="pt-4 border-t border-border-main text-left space-y-3 text-xs">
+                <div>
+                    <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">ID Użytkownika</span>
+                    <span class="text-fg-main font-mono font-bold text-sm">#{{ current_user.id }}</span>
+                </div>
+                <div>
+                    <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Login konta</span>
+                    <span class="text-fg-main font-semibold text-sm">{{ current_user.login }}</span>
+                </div>
+                <div>
+                    <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Adres e-mail</span>
+                    <span class="text-fg-main font-semibold text-sm break-all">{{ current_user.mail }}</span>
+                </div>
+                <div>
+                    <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Ranga profilu</span>
+                    {% if current_user.admin == 2 %}
+                    <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-red-50 text-red-600 border border-red-100 inline-block mt-1">Admin</span>
+                    {% elif current_user.admin == 1 %}
+                    <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-green-50 text-green-600 border border-green-100 inline-block mt-1">Moderator</span>
+                    {% else %}
+                    <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-slate-100 text-fg-main inline-block mt-1">Użytkownik</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="md:col-span-3 space-y-6">
+
+            <div class="bg-white rounded-3xl p-6 border border-border-main shadow-soft space-y-4">
+                <div>
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-fg-main">Ustawienia tożsamości</h4>
+                    <p class="text-xs text-muted-fg mt-0.5">Zmień swój publiczny pseudonim wyświetlany w systemie.</p>
+                </div>
+
+                <form id="updateUsernameForm" class="space-y-4 m-0" novalidate>
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block">Nowy pseudonim</label>
+                            <span id="usernameFeedback" class="text-[11px] font-semibold transition-all"></span>
+                        </div>
+                        <input type="text" id="profileUsername" name="username" value="{{ current_user.username }}" required maxlength="255"
+                               class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main">
+                        <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                    </div>
+
+                    <div id="usernameSuccessBanner" class="hidden p-3 bg-green-50 border border-green-200 text-green-700 text-xs font-semibold rounded-xl text-center">
+                        ✨ Pseudonim został pomyślnie zaktualizowany!
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="h-10 px-6 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm">
+                            Zapisz
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 border border-border-main shadow-soft space-y-4">
+                <div>
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-fg-main">Bezpieczeństwo konta</h4>
+                    <p class="text-xs text-muted-fg mt-0.5">Wprowadź nowe, silne hasło zabezpieczające profil.</p>
+                </div>
+
+                <form id="updatePasswordForm" class="space-y-4 m-0" novalidate>
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Nowe hasło</label>
+                        <input type="password" id="newPassword" name="password" placeholder="••••••••" required maxlength="255"
+                               class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                        <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Wypełnij wartość!</span>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-muted-fg block mb-1.5">Powtórz nowe hasło</label>
+                        <input type="password" id="newPasswordConfirm" placeholder="••••••••" required maxlength="255"
+                               class="w-full h-10 px-4 bg-white rounded-xl border border-border-main focus:outline-none focus:border-primary text-sm text-fg-main placeholder:text-muted-fg/40">
+                        <span class="error-warning text-red-500 text-xs hidden mt-1 block font-medium">Hasła muszą być identyczne!</span>
+                    </div>
+
+                    <div id="passwordSuccessBanner" class="hidden p-3 bg-green-50 border border-green-200 text-green-700 text-xs font-semibold rounded-xl text-center">
+                        🔒 Hasło profilu zostało pomyślnie zmienione!
+                    </div>
+
+                    <div class="mt-3 bg-slate-50 border border-border-main rounded-xl p-3 space-y-1.5">
+                        <div id="req-length-new" class="flex items-center gap-2 text-xs text-muted-fg font-medium transition-colors">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-muted-fg/40 transition-colors"></span> Minimum 8 znaków
+                        </div>
+                        <div id="req-upper-new" class="flex items-center gap-2 text-xs text-muted-fg font-medium transition-colors">
+                            <span class="dot w-1.5 h-1.5 rounded-full bg-muted-fg/40 transition-colors"></span> Przynajmniej jedna wielka litera
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="h-10 px-6 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm">
+                            Zapisz
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let typingTimer;
+    const doneTypingInterval = 450;
+    const currentUsernameGlobal = "{{ current_user.username }}".toLowerCase();
+
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('border-2', 'border-red-500');
+            const warningMsg = this.nextElementSibling;
+            if (warningMsg && warningMsg.classList.contains('error-warning')) {
+                warningMsg.classList.add('hidden');
+            }
+            document.getElementById('usernameSuccessBanner').classList.add('hidden');
+            document.getElementById('passwordSuccessBanner').classList.add('hidden');
+        });
+    });
+
+    function validateFormFields(form) {
+        let isValid = true;
+        const requiredInputs = form.querySelectorAll('[required]');
+
+        requiredInputs.forEach(input => {
+            const warningMsg = input.nextElementSibling;
+            let isFieldInvalid = false;
+
+            if (!input.value.trim()) {
+                isFieldInvalid = true;
+                if (warningMsg) warningMsg.textContent = "Wypełnij wartość!";
+            } else if (input.id === 'newPassword') {
+                const val = input.value;
+                if (val.length < 8 || !/[A-Z]/.test(val)) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Hasło nie spełnia wymagań!";
+                }
+            } else if (input.id === 'newPasswordConfirm') {
+                const mainPass = document.getElementById('newPassword').value;
+                if (input.value !== mainPass) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Hasła muszą być identyczne!";
+                }
+            }
+
+            if (form.id === 'updateUsernameForm' && input.id === 'profileUsername') {
+                if (document.getElementById('usernameFeedback').classList.contains('text-red-500')) {
+                    isFieldInvalid = true;
+                }
+            }
+
+            if (isFieldInvalid) {
+                input.classList.add('border-2', 'border-red-500');
+                if (warningMsg) warningMsg.classList.remove('hidden');
+                isValid = false;
+            } else {
+                input.classList.remove('border-2', 'border-red-500');
+                if (warningMsg) warningMsg.classList.add('hidden');
+            }
+        });
+
+        return isValid;
+    }
+
+    document.getElementById('updateUsernameForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (validateFormFields(this)) {
+            const formData = new FormData(this);
+            const response = await fetch('/update_username', { method: 'POST', body: formData });
+
+            if (response.ok) {
+                const updatedName = document.getElementById('profileUsername').value.trim();
+                document.getElementById('cardDisplayUsername').textContent = updatedName;
+                document.getElementById('usernameSuccessBanner').classList.remove('hidden');
+            } else {
+                const data = await response.json();
+                const usernameInput = document.getElementById('profileUsername');
+                usernameInput.classList.add('border-2', 'border-red-500');
+                usernameInput.nextElementSibling.textContent = data.message;
+                usernameInput.nextElementSibling.classList.remove('hidden');
+            }
+        }
+    });
+
+    document.getElementById('updatePasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (validateFormFields(this)) {
+            const formData = new FormData(this);
+            const response = await fetch('/update_password', { method: 'POST', body: formData });
+
+            if (response.ok) {
+                document.getElementById('passwordSuccessBanner').classList.remove('hidden');
+                this.reset();
+                monitorPasswordLiveReset();
+            }
+        }
+    });
+
+    async function checkUsernameAvailability(value, feedbackElem, inputElem) {
+        const cleanVal = value.trim();
+        if (!cleanVal) { feedbackElem.textContent = ""; return; }
+
+        if (cleanVal.toLowerCase() === currentUsernameGlobal) {
+            feedbackElem.textContent = "✓ twój obecny";
+            feedbackElem.className = "text-[11px] font-semibold text-green-500";
+            inputElem.classList.remove('border-2', 'border-red-500');
+            return;
+        }
+
+        feedbackElem.textContent = "⏳ sprawdzanie...";
+        feedbackElem.className = "text-[11px] font-semibold text-blue-500";
+
+        try {
+            const response = await fetch(`/api/check_username?username=${encodeURIComponent(cleanVal)}`);
+            const data = await response.json();
+            const warningMsg = inputElem.nextElementSibling;
+
+            if (data.exists) {
+                feedbackElem.textContent = "❌ zajęty";
+                feedbackElem.className = "text-[11px] font-semibold text-red-500";
+                inputElem.classList.add('border-2', 'border-red-500');
+                if (warningMsg) {
+                    warningMsg.textContent = "Ten pseudonim jest już zajęty!";
+                    warningMsg.classList.remove('hidden');
+                }
+            } else {
+                feedbackElem.textContent = "✓ dostępny";
+                feedbackElem.className = "text-[11px] font-semibold text-green-500";
+                inputElem.classList.remove('border-2', 'border-red-500');
+                if (warningMsg) warningMsg.classList.add('hidden');
+            }
+        } catch (e) { feedbackElem.textContent = ""; }
+    }
+
+    const usernameInput = document.getElementById('profileUsername');
+    usernameInput.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            checkUsernameAvailability(usernameInput.value, document.getElementById('usernameFeedback'), usernameInput);
+        }, doneTypingInterval);
+    });
+
+    const passwordInput = document.getElementById('newPassword');
+    const reqLength = document.getElementById('req-length-new');
+    const reqUpper = document.getElementById('req-upper-new');
+
+    passwordInput.addEventListener('input', function() {
+        const val = this.value;
+        let isLenOk = val.length >= 8;
+        let isUpOk = /[A-Z]/.test(val);
+
+        reqLength.className = isLenOk ? "flex items-center gap-2 text-xs text-green-600 font-bold" : "flex items-center gap-2 text-xs text-muted-fg font-medium";
+        reqLength.querySelector('.dot').className = isLenOk ? "dot w-1.5 h-1.5 rounded-full bg-green-600" : "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
+
+        reqUpper.className = isUpOk ? "flex items-center gap-2 text-xs text-green-600 font-bold" : "flex items-center gap-2 text-xs text-muted-fg font-medium";
+        reqUpper.querySelector('.dot').className = isUpOk ? "dot w-1.5 h-1.5 rounded-full bg-green-600" : "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
+    });
+
+    function monitorPasswordLiveReset() {
+        reqLength.className = "flex items-center gap-2 text-xs text-muted-fg font-medium";
+        reqLength.querySelector('.dot').className = "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
+        reqUpper.className = "flex items-center gap-2 text-xs text-muted-fg font-medium";
+        reqUpper.className = "flex items-center gap-2 text-xs text-muted-fg font-medium";
+        reqUpper.querySelector('.dot').className = "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
+    }
+</script>
+{% endblock %}
