@@ -6,6 +6,9 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from functools import wraps
+import time
+from flask import request, jsonify
 
 load_dotenv()
 
@@ -75,6 +78,27 @@ def generate_mixed_code():
 @app.route('/profpic.png')
 def serve_profpic():
     return send_from_directory(os.getcwd(), 'profpic.png')
+
+last_requests = {}
+
+def rate_limited(seconds=1):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Używamy IP użytkownika jako klucza
+            ip = request.remote_addr
+            key = f"{f.__name__}_{ip}"
+            now = time.time()
+            
+            # Sprawdzenie różnicy czasu
+            if now - last_requests.get(key, 0) < seconds:
+                return jsonify({"error": "Zbyt częste zapytanie. Poczekaj chwilę."}), 429
+            
+            # Aktualizacja czasu
+            last_requests[key] = now
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 @app.context_processor
 def inject_global_data():
@@ -244,6 +268,7 @@ def random_isbn():
 # ==========================================
 
 @app.route('/register', methods=['POST'])
+@rate_limited(seconds=1)
 def register():
     login = request.form.get('login', '').strip()
     username = request.form.get('username', '').strip()
@@ -266,6 +291,7 @@ def register():
     return jsonify({"success": True})
 
 @app.route('/reset_password_request', methods=['POST'])
+@rate_limited(seconds=1)
 def reset_password_request():
     mail = request.form.get('mail', '').strip()
     user = User.query.filter_by(mail=mail).first()
@@ -283,6 +309,7 @@ def reset_password_request():
     return jsonify({"success": True})
 
 @app.route('/verify_code', methods=['POST'])
+@rate_limited(seconds=1)
 def verify_code():
     code = request.form.get('full_code', '').strip().upper()
     mail = session.get('verify_email')
@@ -307,6 +334,7 @@ def verify_code():
     return jsonify({"success": True, "target": "new_password"})
 
 @app.route('/reset_password_final', methods=['POST'])
+@rate_limited(seconds=1)
 def reset_password_final():
     password = request.form.get('password')
     mail = session.get('verify_email')
@@ -341,6 +369,7 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/update_username', methods=['POST'])
+@rate_limited(seconds=1)
 def update_username():
     if 'user_id' not in session: return jsonify({"success": False}), 401
     new_username = request.form.get('username', '').strip()
@@ -352,6 +381,7 @@ def update_username():
     return jsonify({"success": True})
 
 @app.route('/update_password', methods=['POST'])
+@rate_limited(seconds=1)
 def update_password():
     if 'user_id' not in session: return jsonify({"success": False}), 401
     password = request.form.get('password')
@@ -361,6 +391,7 @@ def update_password():
     return jsonify({"success": True})
 
 @app.route('/api/resend_verification_code')
+@rate_limited(seconds=1)
 def resend_verification_code():
     mail = request.args.get('mail', '').strip()
     user = User.query.filter_by(mail=mail).first()
@@ -377,6 +408,7 @@ def resend_verification_code():
 # ==========================================
 
 @app.route('/add_book', methods=['POST'])
+@rate_limited(seconds=1)
 def add_book():
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2:
         return "Brak uprawnień.", 403
@@ -438,6 +470,7 @@ def add_book():
     return redirect(url_for('index'))
 
 @app.route('/edit_book/<int:book_id>', methods=['POST'])
+@rate_limited(seconds=1)
 def edit_book(book_id):
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2:
         return "Brak uprawnień.", 403
@@ -463,6 +496,7 @@ def edit_book(book_id):
     return redirect(url_for('book_detail', book_id=book.id))
 
 @app.route('/delete_book/<int:book_id>', methods=['POST'])
+@rate_limited(seconds=1)
 def delete_book(book_id):
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2: 
         return "Brak uprawnień.", 403
@@ -472,6 +506,7 @@ def delete_book(book_id):
     return redirect(url_for('index'))
 
 @app.route('/add_author', methods=['POST'])
+@rate_limited(seconds=1)
 def add_author():
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2: 
         return "Brak uprawnień.", 403
@@ -490,6 +525,7 @@ def add_author():
     return redirect(url_for('index'))
 
 @app.route('/add_publisher', methods=['POST'])
+@rate_limited(seconds=1)
 def add_publisher():
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2: 
         return "Brak uprawnień.", 403
@@ -506,6 +542,7 @@ def add_publisher():
     return redirect(url_for('index'))
 
 @app.route('/add_genre', methods=['POST'])
+@rate_limited(seconds=1)
 def add_genre():
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2: 
         return "Brak uprawnień.", 403
@@ -516,6 +553,7 @@ def add_genre():
     return redirect(url_for('index'))
 
 @app.route('/delete_author/<int:author_id>', methods=['POST'])
+@rate_limited(seconds=1)
 def delete_author(author_id):
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2:
         return "Brak uprawnień administratora.", 403
@@ -534,6 +572,7 @@ def delete_author(author_id):
     return redirect(url_for('index'))
 
 @app.route('/delete_genre/<int:genre_id>', methods=['POST'])
+@rate_limited(seconds=1)
 def delete_genre(genre_id):
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2:
         return "Brak uprawnień administratora.", 403
@@ -552,6 +591,7 @@ def delete_genre(genre_id):
     return redirect(url_for('index'))
 
 @app.route('/delete_publisher/<int:pub_id>', methods=['POST'])
+@rate_limited(seconds=1)
 def delete_publisher(pub_id):
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2:
         return "Brak uprawnień administratora.", 403
