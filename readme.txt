@@ -11,6 +11,9 @@
 💻 O Projekcie
 Nowoczesna, w pełni responsywna aplikacja webowa dedykowana do kompleksowego zarządzania zasobami bibliotecznymi oraz interakcjami zalogowanych czytelników. System realizuje pełen cykl zarządzania pozycjami książkowymi, dynamiczne wyszukiwanie w czasie rzeczywistym oraz spersonalizowany moduł asynchronicznych zakładek dla przeczytanych książek.
 
+🪶 Autor
+Projekt został wykonany w pełni samodzielnie przez Jakub Kowalczyk (75459), bez współpracy z drugą osobą z uwagi na ćwiczenie umiejętności full-stack
+
 🚀 Stos Technologiczny (Tech Stack)
 ⚙️ Backend
 Python 3.14.5 – Rdzeń aplikacji oraz logika biznesowa, wykorzystujący najnowsze optymalizacje wydajnościowe interpretera.
