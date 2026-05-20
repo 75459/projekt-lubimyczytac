@@ -122,7 +122,35 @@
 <script>
     let typingTimer;
     const doneTypingInterval = 450;
-    const currentUsernameGlobal = "{{ current_user.username }}".toLowerCase();
+    let currentUsernameGlobal = "{{ current_user.username }}".toLowerCase();
+
+    // --- NOWE ZMIENNE I FUNKCJA GLOBALNA DO PRZYCISKU ---
+    const usernameInput = document.getElementById('profileUsername');
+    const saveUsernameBtn = document.querySelector('#updateUsernameForm button[type="submit"]');
+    let activeUsername = "{{ current_user.username }}";
+
+    function updateUsernameButtonState() {
+        const currentVal = usernameInput.value.trim();
+        const isEmpty = currentVal === '';
+        const isSameAsCurrent = currentVal.toLowerCase() === activeUsername.toLowerCase();
+
+        // Przycisk zablokowany jeśli pole puste lub wpisano to samo co jest
+        saveUsernameBtn.disabled = isEmpty || isSameAsCurrent;
+
+        // Dodanie wizualnego efektu Tailwinda (wyszarzenie)
+        if (saveUsernameBtn.disabled) {
+            saveUsernameBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            saveUsernameBtn.classList.remove('hover:opacity-95', 'cursor-pointer');
+        } else {
+            saveUsernameBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            saveUsernameBtn.classList.add('hover:opacity-95', 'cursor-pointer');
+        }
+    }
+
+    // Odpalenie na start, żeby zablokować domyślnie
+    updateUsernameButtonState();
+    // ----------------------------------------------------
+
 
     document.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', function() {
@@ -190,9 +218,19 @@
                 const updatedName = document.getElementById('profileUsername').value.trim();
                 document.getElementById('cardDisplayUsername').textContent = updatedName;
                 document.getElementById('usernameSuccessBanner').classList.remove('hidden');
+
+                // POPRAWIONE: Aktualizacja pamięci JS po sukcesie przeniesiona tutaj!
+                activeUsername = updatedName;
+                currentUsernameGlobal = updatedName.toLowerCase();
+
+                // Czyszczenie pola i statusu
+                usernameInput.value = '';
+                document.getElementById('usernameFeedback').textContent = '';
+
+                // Zablokowanie przycisku
+                updateUsernameButtonState();
             } else {
                 const data = await response.json();
-                const usernameInput = document.getElementById('profileUsername');
                 usernameInput.classList.add('border-2', 'border-red-500');
                 usernameInput.nextElementSibling.textContent = data.message;
                 usernameInput.nextElementSibling.classList.remove('hidden');
@@ -250,12 +288,14 @@
         } catch (e) { feedbackElem.textContent = ""; }
     }
 
-    const usernameInput = document.getElementById('profileUsername');
     usernameInput.addEventListener('input', () => {
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => {
             checkUsernameAvailability(usernameInput.value, document.getElementById('usernameFeedback'), usernameInput);
         }, doneTypingInterval);
+
+        // POPRAWIONE: Teraz funkcja istnieje i działa prawidłowo
+        updateUsernameButtonState();
     });
 
     const passwordInput = document.getElementById('newPassword');
@@ -277,7 +317,6 @@
     function monitorPasswordLiveReset() {
         reqLength.className = "flex items-center gap-2 text-xs text-muted-fg font-medium";
         reqLength.querySelector('.dot').className = "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
-        reqUpper.className = "flex items-center gap-2 text-xs text-muted-fg font-medium";
         reqUpper.className = "flex items-center gap-2 text-xs text-muted-fg font-medium";
         reqUpper.querySelector('.dot').className = "dot w-1.5 h-1.5 rounded-full bg-muted-fg/40";
     }

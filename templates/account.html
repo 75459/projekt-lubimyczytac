@@ -377,25 +377,36 @@
     });
 
     // --- ASYNCHRONICZNY RESET (CUSTOMOWE RAMKI DLA BŁĘDU 404) ---
+    // --- ASYNCHRONICZNY RESET (BEZ ZAMRAŻANIA SKRYPTU) ---
     document.getElementById('resetForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         if (validateFormInputs(this)) {
             const formData = new FormData(this);
-            const response = await fetch('/reset_password_request', { method: 'POST', body: formData });
-            if (response.ok) {
-                document.getElementById('displayTargetEmail').textContent = document.getElementById('resetEmailField').value.trim();
-                switchTab('verify');
-            } else {
-                const data = await response.json();
-                const emailInput = document.getElementById('resetEmailField');
-                const warningMsg = emailInput.nextElementSibling;
+            try {
+                const response = await fetch('/reset_password_request', { method: 'POST', body: formData });
+                if (response.ok) {
+                    document.getElementById('displayTargetEmail').textContent = document.getElementById('resetEmailField').value.trim();
+                    switchTab('verify');
+                } else {
+                    // Fallback jeśli backend rzuci dziwny błąd (np. 429) i nie zwróci JSON-a
+                    let errorText = "Konto z takim adresem nie istnieje.";
+                    try {
+                        const data = await response.json();
+                        errorText = data.message || data.error || errorText;
+                    } catch (err) {
+                        if (response.status === 429) errorText = "Zbyt częste zapytania. Poczekaj chwilę.";
+                    }
 
-                // Przypisanie customowych stylów zamiast natywnego okna przeglądarki
-                emailInput.classList.add('border-2', 'border-red-500');
-                if (warningMsg) {
-                    warningMsg.textContent = data.message;
-                    warningMsg.classList.remove('hidden');
+                    const emailInput = document.getElementById('resetEmailField');
+                    const warningMsg = emailInput.nextElementSibling;
+                    emailInput.classList.add('border-2', 'border-red-500');
+                    if (warningMsg) {
+                        warningMsg.textContent = errorText;
+                        warningMsg.classList.remove('hidden');
+                    }
                 }
+            } catch (err) {
+                console.error("Błąd zapytania:", err);
             }
         }
     });
@@ -431,9 +442,12 @@
         hiddenFullCode.value = code;
     }
 
+    // --- WERSJA DEMO: WERYFIKACJA KODU (AKCEPTUJE KAŻDY KOD) ---
+    // --- WERSJA DEMO: WERYFIKACJA KODU (PYTA SERWER O KIERUNEK) ---
     document.getElementById('otpSubmitForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         combineOtpValues();
+
         if (hiddenFullCode.value.length !== 6) {
             otpErrorGrid.textContent = "Wprowadź kompletny 6-znakowy kod!";
             otpErrorGrid.classList.remove('hidden');
@@ -441,19 +455,25 @@
             return;
         }
 
-        const formData = new FormData(this);
-        const response = await fetch('/verify_code', { method: 'POST', body: formData });
-        const data = await response.json();
+        try {
+            const formData = new FormData(this);
+            const response = await fetch('/verify_code', { method: 'POST', body: formData });
+            const data = await response.json();
 
-        if (data.success) {
-            if (data.target === 'home') {
-                window.location.href = '/';
-            } else if (data.target === 'new_password') {
-                switchTab('new_password');
+            if (data.success) {
+                // Jeśli Python powiedział 'home', wracamy na główną (rejestracja)
+                if (data.target === 'home') {
+                    window.location.href = '/';
+                } else {
+                    // Jeśli powiedział coś innego, ładujemy nowe hasło (reset)
+                    switchTab('new_password');
+                }
+            } else {
+                otpErrorGrid.textContent = data.message || "Błąd weryfikacji.";
+                otpErrorGrid.classList.remove('hidden');
             }
-        } else {
-            otpErrorGrid.textContent = data.message;
-            otpErrorGrid.classList.remove('hidden');
+        } catch (err) {
+            console.error("Błąd zapytania:", err);
         }
     });
 

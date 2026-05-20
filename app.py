@@ -299,7 +299,7 @@ def reset_password_request():
     if not user:
         return jsonify({"success": False, "message": "Nie znaleziono takiego adresu e-mail!"}), 404
 
-        code = generate_mixed_code()
+    code = generate_mixed_code()
     user.temp_code = code
     db.session.commit()
 
