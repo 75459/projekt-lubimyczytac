@@ -75,6 +75,7 @@ ipython_config.py
 .pdm-build/
 # pixi
 .pixi
+dokumentacja_projektu.txt
 # PEP 582
 __pypackages__/
 # Celery stuff
