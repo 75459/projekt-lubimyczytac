@@ -40,7 +40,7 @@ Ochrona Repozytorium (.gitignore): Lokalny plik .env został trwale wykluczony z
 
 Kryptografia Haseł: System nie przechowuje haseł w formie jawnej. Dane przed zapisaniem w strukturach PostgreSQL podlegają jednostronnemu haszowaniu kryptograficznemu (PBKDF2/bcrypt).
 
-Autoryzacja Żądań: Stan uwierzytelnienia sprawdzany jest bezwzględnie na backendzie. Próba dodania pozycji do przeczytanych przez anonimowego użytkownika wywołuje asynchroniczny modal (overlay) blokujący akcję z żądaniem logowania.
+Autoryzacja Żądań: Stan uwierzytelnienia sprawdzany jest bezwzględnie na backendzie. Próba dodania pozycji do przeczytanych przez anonimowego użytkownika wywołuje asynchroniczny modal (overlay) blokujący akcję z żądaniem logowania.    
 
 
 Jakub Kowalczyk
