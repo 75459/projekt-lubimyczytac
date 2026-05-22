@@ -62,6 +62,12 @@
                             </div>
                             <span>Katalog główny</span>
                         </a>
+                        <a href="/read_books" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {% if request.path == '/read_books' %} bg-slate-100 text-fg-main shadow-soft-sm {% else %} text-muted-fg hover:bg-slate-50 hover:text-fg-main {% endif %}">
+                            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-soft-sm shrink-0">
+                                <svg class="w-4 h-4 text-fg-main stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v18l7-4 7 4V3H5z" /></svg>
+                            </div>
+                            <span>Przeczytane książki</span>
+                        </a>
                         <a href="/about" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {% if request.path == '/about' %} bg-slate-100 text-fg-main shadow-soft-sm {% else %} text-muted-fg hover:bg-slate-50 hover:text-fg-main {% endif %}">
                             <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-soft-sm shrink-0">
                                 <svg class="w-4 h-4 text-fg-main" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -318,18 +324,25 @@
         </div>
     </div>
 
-    <div id="genreModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) closeModal('genreModal')">
+<div id="genreModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/30 backdrop-blur-sm" onclick="if(event.target === this) closeModal('genreModal')">
         <div class="relative w-full max-w-md mx-4 bg-white rounded-3xl p-8 shadow-2xl border border-border-main" onclick="event.stopPropagation();">
-            <h2 class="text-xl font-bold mb-4">Dodaj nowy gatunek</h2>
+            <h2 class="text-xl font-bold mb-4 text-fg-main">Dodaj nowy gatunek</h2>
             <form action="/add_genre" method="POST" onsubmit="event.preventDefault(); handleAddGenre(this);" class="space-y-4" novalidate>
                 <div>
                     <label class="text-sm font-medium block mb-1">Nazwa gatunku</label>
-                    <input type="text" name="name" class="w-full h-10 px-3 bg-card-lavender rounded-xl border border-border-main" required>
+                    <input type="text" name="name" class="w-full h-10 px-3 bg-card-lavender rounded-xl border border-border-main text-fg-main" required maxlength="255">
                     <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
                 </div>
+                
+                <div>
+                    <label class="text-sm font-medium block mb-1">Opis gatunku (max 255 zn.)</label>
+                    <textarea name="desc" maxlength="255" class="w-full min-h-[80px] p-3 bg-card-blue/50 rounded-xl border border-border-main text-sm text-fg-main" required></textarea>
+                    <span class="text-red-500 text-xs hidden mt-1">Wypełnij zawartość!</span>
+                </div>
+
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="closeModal('genreModal')" class="flex-1 h-10 rounded-xl bg-gray-100 text-gray-700 cursor-pointer">Anuluj</button>
-                    <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold">Dodaj</button>
+                    <button type="submit" class="flex-1 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white cursor-pointer font-semibold shadow-soft-sm">Dodaj</button>
                 </div>
             </form>
         </div>
@@ -731,6 +744,62 @@
                 searchDropdown.classList.add('hidden');
             }
         });
+    </script>
+    <div id="authRequiredModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden bg-black/20 backdrop-blur-sm" onclick="if(event.target === this) closeAuthModal()">
+        <div class="relative w-full max-w-sm mx-4 bg-white rounded-3xl p-6 shadow-xl border border-border-main text-center" onclick="event.stopPropagation();">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-fg-main mb-2">Brak uprawnień</h3>
+            <p class="text-sm text-muted-fg mb-6">Musisz posiadać konto, aby zapisać książkę</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeAuthModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer">Okej</button>
+                <a href="/account" class="flex-1 px-4 py-2.5 text-sm font-semibold bg-gradient-to-tl from-slate-700 to-slate-800 text-white hover:opacity-95 rounded-xl transition-colors cursor-pointer text-center flex items-center justify-center">Przejdź do logowania</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function closeAuthModal() {
+            document.getElementById('authRequiredModal').classList.add('hidden');
+        }
+
+        async function toggleReadStatus(bookId, btnElement, isLoggedIn) {
+            if (!isLoggedIn) {
+                document.getElementById('authRequiredModal').classList.remove('hidden');
+                return;
+            }
+            if (!btnElement) return;
+
+            try {
+                const response = await fetch(`/api/toggle_read/${bookId}`, { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    const wrapper = btnElement.querySelector('.bookmark-icon-wrapper');
+                    const text = btnElement.querySelector('.bookmark-text');
+
+                    const iconSolid = `<svg class="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 24 24"><path d="M5 3a2 2 0 00-2 2v16l9-4 9 4V5a2 2 0 00-2-2H5z"/></svg>`;
+                    const iconOutline = `<svg class="w-5 h-5 text-gray-400 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v18l7-4 7 4V3H5z"/></svg>`;
+
+                    if (data.status === 'added') {
+                        if (wrapper) wrapper.innerHTML = iconSolid;
+                        if (text) text.textContent = 'Przeczytano';
+                        btnElement.className = "group flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-soft-sm cursor-pointer border bg-amber-50 text-amber-700 border-amber-200";
+                    } else {
+                        if (wrapper) wrapper.innerHTML = iconOutline;
+                        if (text) text.textContent = 'Oznacz jako przeczytane';
+                        btnElement.className = "group flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-soft-sm cursor-pointer border bg-gray-50 text-gray-600 border-gray-200";
+
+                        if (window.location.pathname === '/read_books') {
+                            const card = document.getElementById(`book-card-${bookId}`);
+                            if (card) card.remove();
+                            const grid = document.getElementById('readBooksGrid');
+                            if (grid && grid.children.length === 0) window.location.reload();
+                        }
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
     </script>
 </body>
 </html>

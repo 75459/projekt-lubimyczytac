@@ -42,9 +42,24 @@
                         {% endif %}
                     </p>
                 </div>
-                <div class="mt-6 inline-block bg-slate-50 px-5 py-3 rounded-2xl border border-border-main/60 self-center md:self-start">
-                    <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Data publikacji</span>
-                    <span class="text-sm font-semibold text-fg-main block mt-1">{{ book.pub_date.strftime('%Y-%m-%d') if book.pub_date else "Brak danych" }}</span>
+                <div class="mt-6 flex flex-col sm:flex-row items-center gap-4 self-center md:self-start">
+                    <div class="inline-block bg-slate-50 px-5 py-3 rounded-2xl border border-border-main/60">
+                        <span class="block text-muted-fg font-bold uppercase tracking-wider text-[10px]">Data publikacji</span>
+                        <span class="text-sm font-semibold text-fg-main block mt-1">{{ book.pub_date.strftime('%Y-%m-%d') if book.pub_date else "Brak danych" }}</span>
+                    </div>
+
+                    <button onclick="toggleReadStatus({{ book.id }}, this, {{ 'true' if current_user else 'false' }})" class="group flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all shadow-soft-sm cursor-pointer border {% if current_user and book in current_user.read_books %} bg-amber-50 text-amber-700 border-amber-200 {% else %} bg-gray-50 text-gray-600 border-gray-200 {% endif %}">
+                        <div class="bookmark-icon-wrapper transform transition-transform duration-300 group-hover:scale-125 origin-bottom">
+                            {% if current_user and book in current_user.read_books %}
+                            <svg class="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 24 24"><path d="M5 3a2 2 0 00-2 2v16l9-4 9 4V5a2 2 0 00-2-2H5z" /></svg>
+                            {% else %}
+                            <svg class="w-5 h-5 text-gray-400 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v18l7-4 7 4V3H5z" /></svg>
+                            {% endif %}
+                        </div>
+                        <span class="bookmark-text">
+                            {% if current_user and book in current_user.read_books %}Przeczytano{% else %}Oznacz jako przeczytane{% endif %}
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -82,7 +97,7 @@
             <h3 class="text-xs font-bold uppercase tracking-wider text-muted-fg">Opis pozycji</h3>
             <p class="text-sm text-fg-main leading-relaxed bg-slate-50 p-5 rounded-2xl border border-border-main/80 whitespace-pre-line">{{ book.desc or "Ta książka nie posiada jeszcze opisu." }}</p>
         </div>
-{% if current_user and current_user.admin == 2 %}
+        {% if current_user and current_user.admin == 2 %}
         <div class="flex gap-3 pt-4 border-t border-border-main mt-6">
             <button onclick="document.getElementById('editBookModal').classList.remove('hidden')" class="px-4 py-2 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm">✏️ Edytuj książkę</button>
             <button onclick="document.getElementById('deleteModal').classList.remove('hidden')" class="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-100 transition-colors cursor-pointer">🗑️ Usuń książkę</button>
@@ -119,7 +134,7 @@
                             <label class="text-sm font-medium block mb-1">Autor</label>
                             <select name="author_id" class="w-full h-10 px-2 bg-card-peach rounded-xl border border-border-main text-sm cursor-pointer text-fg-main" required>
                                 {% for author in global_authors %}
-                                <option value="{{ author.id }}" {% if book.author_id == author.id %}selected{% endif %}>{{ author.name }} {{ author.surname }}</option>
+                                <option value="{{ author.id }}" {% if book.author_id==author.id %}selected{% endif %}>{{ author.name }} {{ author.surname }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -127,7 +142,7 @@
                             <label class="text-sm font-medium block mb-1">Wydawnictwo</label>
                             <select name="pub_house_id" class="w-full h-10 px-2 bg-card-lavender rounded-xl border border-border-main text-sm cursor-pointer text-fg-main" required>
                                 {% for pub in global_publishers %}
-                                <option value="{{ pub.id }}" {% if book.pub_house_id == pub.id %}selected{% endif %}>{{ pub.name }}</option>
+                                <option value="{{ pub.id }}" {% if book.pub_house_id==pub.id %}selected{% endif %}>{{ pub.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -135,7 +150,7 @@
                             <label class="text-sm font-medium block mb-1">Gatunek</label>
                             <select name="genre_id" class="w-full h-10 px-2 bg-card-cream rounded-xl border border-border-main text-sm cursor-pointer text-fg-main" required>
                                 {% for genre in global_genres %}
-                                <option value="{{ genre.id }}" {% if book.genre_id == genre.id %}selected{% endif %}>{{ genre.name }}</option>
+                                <option value="{{ genre.id }}" {% if book.genre_id==genre.id %}selected{% endif %}>{{ genre.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

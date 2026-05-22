@@ -35,6 +35,7 @@ class Genre(db.Model):
     __tablename__ = 'genre'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    desc = db.Column(db.Text, default="Brak opisu.")
     books = db.relationship('Book', backref='genre', lazy=True)
 
 class PubHouse(db.Model):
@@ -60,6 +61,13 @@ class Book(db.Model):
     pub_house_id = db.Column(db.Integer, db.ForeignKey('pub_house.id'), nullable=False)
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'), nullable=False)
 
+# Mapowanie istniejącej w bazie tabeli asocjacyjnej
+read_books_association = db.Table('read_books',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('book_id', db.Integer, db.ForeignKey('books.id', ondelete='CASCADE'), primary_key=True),
+    extend_existing=True
+)
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -70,6 +78,10 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=False, nullable=False)
     temp_code = db.Column(db.String(6), nullable=True)
     admin = db.Column(db.Integer, default=0, nullable=False)
+    
+    # Odczyt relacji książek
+    read_books = db.relationship('Book', secondary=read_books_association, lazy='subquery',
+        backref=db.backref('readers', lazy=True))
 
 def generate_mixed_code():
     chars = string.ascii_uppercase + string.digits
@@ -139,6 +151,32 @@ def publisher_detail(pub_id):
 def genre_detail(genre_id):
     genre = Genre.query.get_or_404(genre_id)
     return render_template('genre.html', genre=genre)
+
+@app.route('/read_books')
+def read_books_page():
+    if 'user_id' not in session:
+        return redirect(url_for('account_page'))
+    user = User.query.get(session['user_id'])
+    return render_template('read_books.html', books=user.read_books)
+
+@app.route('/api/toggle_read/<int:book_id>', methods=['POST'])
+@rate_limited(seconds=1)
+def toggle_read(book_id):
+    if 'user_id' not in session: 
+        return jsonify({'success': False, 'message': 'Zaloguj się'}), 401
+    
+    user = User.query.get(session['user_id'])
+    book = Book.query.get_or_404(book_id)
+
+    if book in user.read_books:
+        user.read_books.remove(book)
+        status = 'removed'
+    else:
+        user.read_books.append(book)
+        status = 'added'
+        
+    db.session.commit()
+    return jsonify({'success': True, 'status': status})
 
 @app.route('/about')
 def about():
@@ -440,7 +478,7 @@ def add_book():
 
     genre_id_raw = request.form.get('genre_id')
     if genre_id_raw and genre_id_raw.startswith("NEW:"):
-        new_genre = Genre(name=genre_id_raw.replace("NEW:", "").strip())
+        new_genre = Genre(name=genre_id_raw.replace("NEW:", "").strip(), desc="Brak opisu.")
         db.session.add(new_genre)
         db.session.commit()
         genre_id = new_genre.id
@@ -547,7 +585,14 @@ def add_genre():
     if 'user_id' not in session or User.query.get(session['user_id']).admin != 2: 
         return "Brak uprawnień.", 403
         
-    new_genre = Genre(name=request.form.get('name') or "Nieznane")
+    desc_raw = request.form.get('desc') or "Brak opisu."
+    if len(desc_raw) > 255:
+        desc_raw = desc_raw[:252] + "..."
+        
+    new_genre = Genre(
+        name=request.form.get('name') or "Nieznane",
+        desc=desc_raw # ZAPIS OPISU DO BAZY
+    )
     db.session.add(new_genre)
     db.session.commit()
     return redirect(url_for('index'))
