@@ -3,7 +3,7 @@
 <div class="max-w-3xl mx-auto px-6 py-12">
     <div class="bg-white rounded-3xl p-8 md:p-10 shadow-md border border-border-main">
         <h1 class="text-3xl font-bold text-center mb-8">O projekcie</h1>
-        
+
         <div class="flex flex-col md:flex-row gap-6 items-center mb-8 bg-card-blue rounded-2xl p-6">
             <div class="w-32 h-32 rounded-full overflow-hidden border-2 border-primary bg-gray-100 shrink-0 shadow-sm">
                 <img src="/profpic.png" alt="Jakub Kowalczyk" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150';">
@@ -36,6 +36,13 @@
                 <p class="text-xs">Ta strona NIE JEST prawdziwą księgarnią internetową ani witryną komercyjną. Nie ma możliwości składania zamówień ani dokonywania jakichkolwiek transakcji finansowych.</p>
             </div>
         </div>
+
+        <div class="pt-6 border-t border-border-main mt-8 flex justify-center gap-6 text-xs font-semibold">
+            <a href="/regulamin" class="text-link-color underline hover:text-primary transition-colors">Regulamin strony</a>
+            <span class="text-border-main select-none">|</span>
+            <a href="/tos" class="text-link-color underline hover:text-primary transition-colors">Zasady prywatności</a>
+        </div>
+
     </div>
 </div>
 {% endblock %}

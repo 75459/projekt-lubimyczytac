@@ -97,6 +97,209 @@
             <h3 class="text-xs font-bold uppercase tracking-wider text-muted-fg">Opis pozycji</h3>
             <p class="text-sm text-fg-main leading-relaxed bg-slate-50 p-5 rounded-2xl border border-border-main/80 whitespace-pre-line">{{ book.desc or "Ta książka nie posiada jeszcze opisu." }}</p>
         </div>
+        <div id="book-review-section" class="max-w-5xl w-full mx-auto font-sans mt-10 pt-8 border-t border-border-main">
+            <h2 class="text-xl font-bold text-fg-main mb-6">Opinie czytelników</h2>
+
+            <div class="flex flex-col sm:flex-row gap-6 mb-8 p-6 bg-slate-50 rounded-2xl border border-border-main shadow-sm">
+                <div class="flex flex-col items-center justify-center sm:border-r sm:border-border-main sm:pr-8">
+                    <span class="text-5xl font-bold text-fg-main" id="avg-rating">0.0</span>
+                    <div class="flex gap-0.5 my-2" id="avg-stars"></div>
+                    <span class="text-sm text-muted-fg font-medium"><span id="total-reviews">0</span> opinii</span>
+                </div>
+                <div class="flex-1 space-y-2" id="rating-histogram"></div>
+            </div>
+
+            {% if current_user %}
+            <div id="review-form-container" class="mb-8 p-6 bg-white rounded-2xl border border-border-main shadow-soft-sm hidden">
+                <h3 class="text-lg font-bold text-fg-main mb-4" id="form-title">Napisz opinię</h3>
+                <div id="form-error-msg" class="hidden mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm font-semibold border border-red-200"></div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold uppercase tracking-wider text-muted-fg mb-2">Twoja ocena</label>
+                    <div class="flex gap-1" id="rating-input"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold uppercase tracking-wider text-muted-fg mb-2">Twój komentarz (opcjonalnie)</label>
+                    <textarea id="review-comment" class="w-full px-4 py-3 bg-slate-50 border border-border-main rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none resize-none transition-shadow duration-150 text-fg-main text-sm" rows="4" maxlength="255" placeholder="Podziel się swoimi myślami o tej książce..."></textarea>
+                    <div class="flex justify-end items-center mt-1">
+                        <span class="text-[10px] font-bold text-muted-fg"><span id="char-count">0</span>/255 znaków</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-fg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        <span>Ochrona antyspamowa</span>
+                    </div>
+                    <button id="submit-review" class="px-6 py-2.5 bg-amber-500 text-white font-bold rounded-xl transition-all duration-150 hover:bg-amber-600 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-soft-sm uppercase text-xs tracking-wide" disabled>Wyślij opinię</button>
+                </div>
+            </div>
+            {% else %}
+            <div class="mb-8 p-6 bg-slate-50 rounded-2xl border border-border-main text-center shadow-inner">
+                <span class="text-3xl mb-2 block">🔒</span>
+                <p class="text-sm font-semibold text-fg-main mb-3">Musisz posiadać konto, aby oceniać książki.</p>
+                <a href="/account" class="inline-block px-5 py-2 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity">Przejdź do logowania</a>
+            </div>
+            {% endif %}
+
+            <div id="success-message" class="hidden mb-8 p-5 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-center font-bold text-sm shadow-soft-sm">Twoja opinia została pomyślnie zapisana!</div>
+
+            <div class="space-y-4" id="reviews-list"></div>
+        </div>
+
+        <script>
+        (function() {
+            const CURRENT_USER_ID = {{ current_user.id if current_user else 'null' }};
+            const BOOK_ID = {{ book.id }};
+
+            // Mapowanie z tabeli bazy danych (r.stars)
+            let reviews = [
+                {% for r in book.book_reviews %}
+                {
+                    id: {{ r.id }},
+                    userId: {{ r.user_id }},
+                    user: "{{ r.user.username }}",
+                    rating: {{ r.stars }},
+                    comment: {{ r.comment|default('', true)|tojson }},
+                    date: "Czytelnik"
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+
+            let selectedRating = 0; let hoverRating = 0; const expandedReviews = new Set();
+            const ratingInput = document.getElementById('rating-input'), commentInput = document.getElementById('review-comment'), charCount = document.getElementById('char-count'), submitBtn = document.getElementById('submit-review'), reviewsList = document.getElementById('reviews-list'), formContainer = document.getElementById('review-form-container'), successMessage = document.getElementById('success-message'), errorMsg = document.getElementById('form-error-msg'), avgRatingEl = document.getElementById('avg-rating'), totalReviewsEl = document.getElementById('total-reviews');
+
+            function calculateStats() {
+                if (reviews.length === 0) return { avg: 0, counts: {1:0, 2:0, 3:0, 4:0, 5:0} };
+                let sum = 0; let counts = {1:0, 2:0, 3:0, 4:0, 5:0};
+                reviews.forEach(r => { sum += r.rating; counts[r.rating]++; });
+                return { avg: (sum / reviews.length).toFixed(1), counts };
+            }
+
+            function renderHeaderStats() {
+                const stats = calculateStats();
+                avgRatingEl.textContent = reviews.length > 0 ? stats.avg : '0.0';
+                totalReviewsEl.textContent = reviews.length;
+                const avgContainer = document.getElementById('avg-stars'); avgContainer.innerHTML = '';
+                const avgRounded = Math.round(stats.avg);
+                for (let i = 1; i <= 5; i++) {
+                    const color = i <= avgRounded ? 'text-amber-400' : 'text-gray-300';
+                    avgContainer.innerHTML += `<svg class="w-6 h-6 ${color}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`;
+                }
+                const histContainer = document.getElementById('rating-histogram'); histContainer.innerHTML = '';
+                for (let i = 5; i >= 1; i--) {
+                    const count = stats.counts[i], percent = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                    histContainer.innerHTML += `<div class="flex items-center gap-3"><span class="text-xs font-bold text-muted-fg w-12">${i} gw.</span><div class="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: ${percent}%"></div></div><span class="text-xs font-bold text-fg-main w-8 text-right">${count}</span></div>`;
+                }
+            }
+
+            function setupFormUI() {
+                if (!CURRENT_USER_ID || !formContainer) return;
+                const userReview = reviews.find(r => r.userId === CURRENT_USER_ID);
+                if (userReview) { formContainer.classList.add('hidden'); }
+                else {
+                    formContainer.classList.remove('hidden');
+                    document.getElementById('form-title').textContent = "Napisz opinię";
+                    selectedRating = 0; commentInput.value = ''; charCount.textContent = '0';
+                    updateStarsUI(); validateForm();
+                }
+            }
+
+            function initRatingButtons() {
+                if (!ratingInput) return; ratingInput.innerHTML = '';
+                for(let i=1; i<=5; i++) {
+                    ratingInput.innerHTML += `<button type="button" class="star-btn p-1 transition-transform duration-150 hover:scale-125" data-rating="${i}"><svg class="w-8 h-8 text-gray-300 transition-colors duration-150" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button>`;
+                }
+                ratingInput.querySelectorAll('.star-btn').forEach(btn => {
+                    const rating = parseInt(btn.dataset.rating);
+                    btn.addEventListener('mouseenter', () => { hoverRating = rating; updateStarsUI(); });
+                    btn.addEventListener('mouseleave', () => { hoverRating = 0; updateStarsUI(); });
+                    btn.addEventListener('click', () => { selectedRating = rating; updateStarsUI(); validateForm(); });
+                });
+            }
+
+            function updateStarsUI() {
+                if (!ratingInput) return;
+                const active = hoverRating || selectedRating;
+                ratingInput.querySelectorAll('.star-btn').forEach((btn, idx) => {
+                    const svg = btn.querySelector('svg');
+                    if (idx < active) svg.classList.replace('text-gray-300', 'text-amber-400');
+                    else svg.classList.replace('text-amber-400', 'text-gray-300');
+                });
+            }
+
+            if (commentInput) commentInput.addEventListener('input', () => { charCount.textContent = commentInput.value.length; errorMsg.classList.add('hidden'); });
+            function validateForm() { if(submitBtn) submitBtn.disabled = selectedRating === 0; }
+
+            function renderReviewsList() {
+                if (reviews.length === 0) { reviewsList.innerHTML = '<div class="text-center p-8 bg-white border border-border-main rounded-2xl text-muted-fg font-semibold shadow-soft-sm">Nikt jeszcze nie ocenił tej książki. Bądź pierwszy!</div>'; return; }
+                let html = '';
+                reviews.forEach(review => {
+                    const isExpanded = expandedReviews.has(review.id), needsTruncation = review.comment.length > 80, displayComment = needsTruncation && !isExpanded ? review.comment.substring(0, 80) + '...' : review.comment;
+                    const initials = review.user.substring(0, 2).toUpperCase();
+                    let starsHtml = '';
+                    for (let i = 1; i <= 5; i++) {
+                        const color = i <= review.rating ? 'text-amber-400' : 'text-gray-300';
+                        starsHtml += `<svg class="w-4 h-4 ${color}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`;
+                    }
+                    const isOwner = review.userId === CURRENT_USER_ID;
+                    html += `<div class="p-5 bg-white rounded-2xl border border-border-main group transition-shadow duration-150 hover:shadow-md" data-review-id="${review.id}"><div class="flex items-start justify-between mb-3"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-gradient-to-tl from-slate-700 to-slate-800 text-white flex items-center justify-center text-xs font-bold shadow-soft-sm">${initials}</div><div><p class="font-bold text-fg-main text-sm">${review.user}</p><div class="flex items-center gap-2"><div class="flex gap-0.5">${starsHtml}</div><span class="text-[10px] font-bold text-muted-fg uppercase tracking-wider">${review.date}</span></div></div></div>${isOwner ? `<div class="flex gap-2"><button class="edit-btn px-3 py-1.5 text-xs font-bold bg-slate-100 text-fg-main hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border border-border-main">Edytuj</button><button class="delete-btn px-3 py-1.5 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 rounded-lg transition-colors cursor-pointer">Usuń</button></div>` : ''}</div>${review.comment ? `<p class="text-fg-main text-sm leading-relaxed mt-2 p-3 bg-slate-50 rounded-xl border border-border-main/50">${displayComment}${needsTruncation ? `<button class="read-more-btn ml-1 inline-flex items-center text-amber-600 hover:text-amber-700 font-bold transition-colors cursor-pointer text-xs uppercase tracking-wider">${isExpanded ? 'Zwiń' : 'Rozwiń'}<svg class="w-3 h-3 ml-0.5 transition-transform duration-150 ${isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg></button>` : ''}</p>` : ''}</div>`;
+                });
+                reviewsList.innerHTML = html; attachReviewListeners();
+            }
+
+            function attachReviewListeners() {
+                document.querySelectorAll('.read-more-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const card = e.target.closest('[data-review-id]'), reviewId = parseInt(card.dataset.reviewId);
+                        if (expandedReviews.has(reviewId)) expandedReviews.delete(reviewId); else expandedReviews.add(reviewId);
+                        renderReviewsList();
+                    });
+                });
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const card = e.target.closest('[data-review-id]'), reviewId = parseInt(card.dataset.reviewId);
+                        if(confirm("Czy na pewno chcesz usunąć opinię?")) {
+                            const res = await fetch(`/api/review/${reviewId}`, { method: 'DELETE' });
+                            if(res.ok) { reviews = reviews.filter(r => r.id !== reviewId); refreshAll(); }
+                        }
+                    });
+                });
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const card = e.target.closest('[data-review-id]'), reviewId = parseInt(card.dataset.reviewId), review = reviews.find(r => r.id === reviewId);
+                        if (review && formContainer) {
+                            document.getElementById('form-title').textContent = "Edytuj opinię";
+                            selectedRating = review.rating; commentInput.value = review.comment; charCount.textContent = review.comment.length;
+                            updateStarsUI(); validateForm(); formContainer.classList.remove('hidden'); formContainer.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                });
+            }
+
+            if (submitBtn) {
+                submitBtn.addEventListener('click', async () => {
+                    submitBtn.disabled = true; errorMsg.classList.add('hidden');
+                    try {
+                        const res = await fetch(`/api/review/${BOOK_ID}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating: selectedRating, comment: commentInput.value }) });
+                        const data = await res.json();
+                        if (data.success) {
+                            reviews = reviews.filter(r => r.userId !== CURRENT_USER_ID);
+                            reviews.unshift({ id: data.review_id, userId: CURRENT_USER_ID, user: data.user, rating: selectedRating, comment: commentInput.value, date: "Czytelnik" });
+                            formContainer.classList.add('hidden'); successMessage.classList.remove('hidden'); refreshAll();
+                            setTimeout(() => { successMessage.classList.add('hidden'); }, 4000);
+                        } else {
+                            errorMsg.textContent = data.message; errorMsg.classList.remove('hidden'); submitBtn.disabled = false;
+                        }
+                    } catch (err) { errorMsg.textContent = "Błąd komunikacji."; errorMsg.classList.remove('hidden'); submitBtn.disabled = false; }
+                });
+            }
+
+            function refreshAll() { renderHeaderStats(); renderReviewsList(); setupFormUI(); }
+            initRatingButtons(); refreshAll();
+        })();
+        </script>
         {% if current_user and current_user.admin == 2 %}
         <div class="flex gap-3 pt-4 border-t border-border-main mt-6">
             <button onclick="document.getElementById('editBookModal').classList.remove('hidden')" class="px-4 py-2 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm">✏️ Edytuj książkę</button>

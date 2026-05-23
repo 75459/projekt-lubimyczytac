@@ -60,6 +60,21 @@ class Book(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('author.id'), nullable=False)
     pub_house_id = db.Column(db.Integer, db.ForeignKey('pub_house.id'), nullable=False)
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'), nullable=False)
+review_position = db.Table('review_position',
+    db.Column('review_id', db.Integer, db.ForeignKey('reviews.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('book_id', db.Integer, db.ForeignKey('books.id', ondelete='CASCADE'), primary_key=True),
+    extend_existing=True
+)
+
+class Review(db.Model):
+    __tablename__ = 'reviews'
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    comment = db.Column(db.Text, nullable=True)
+    stars = db.Column(db.BigInteger, nullable=False)
+    
+    user = db.relationship('User', backref=db.backref('user_reviews', lazy=True, cascade="all, delete-orphan"))
+    book = db.relationship('Book', secondary=review_position, backref=db.backref('book_reviews', lazy=True))
 
 # Mapowanie istniejącej w bazie tabeli asocjacyjnej
 read_books_association = db.Table('read_books',
@@ -127,10 +142,68 @@ def inject_global_data():
 # ROUTING GŁÓWNY I API FRONTENDU
 # ==========================================
 
+def check_profanity(text):
+    if not text: return False
+    bad_words = ['kurwa', 'jeb', 'pierdol', 'chuj', 'pizd', 'suka', 'dziwk', 'gówno', 'szmat', 'zajeb']
+    lower_text = text.lower()
+    return any(bad in lower_text for bad in bad_words)
+
+@app.route('/api/review/<int:book_id>', methods=['POST'])
+@rate_limited(seconds=3)
+def submit_review(book_id):
+    if 'user_id' not in session: 
+        return jsonify({'success': False, 'message': 'Zaloguj się, aby dodać opinię.'}), 401
+    
+    data = request.json
+    rating = data.get('rating', 0)
+    comment = data.get('comment', '').strip()[:255]
+    
+    if not (1 <= rating <= 5): 
+        return jsonify({'success': False, 'message': 'Ocena musi wynosić od 1 do 5 gwiazdek.'}), 400
+    if check_profanity(comment): 
+        return jsonify({'success': False, 'message': 'Komentarz zawiera niedozwolone słownictwo!'}), 400
+    
+    # Szukamy opinii przez tabelę łączącą review_position
+    review = Review.query.join(review_position).filter(
+        Review.user_id == session['user_id'],
+        review_position.c.book_id == book_id
+    ).first()
+    
+    if review:
+        review.stars = rating
+        review.comment = comment
+        db.session.commit()
+        review_id = review.id
+    else:
+        review = Review(user_id=session['user_id'], stars=rating, comment=comment)
+        db.session.add(review)
+        db.session.flush() # Pobiera ID bez zamykania transakcji
+        db.session.execute(review_position.insert().values(review_id=review.id, book_id=book_id))
+        db.session.commit()
+        review_id = review.id
+    
+    return jsonify({
+        'success': True, 
+        'review_id': review_id,
+        'user': User.query.get(session['user_id']).username
+    })
+
+@app.route('/api/review/<int:review_id>', methods=['DELETE'])
+@rate_limited(seconds=2)
+def delete_review(review_id):
+    if 'user_id' not in session: return jsonify({'success': False}), 401
+    review = Review.query.get_or_404(review_id)
+    if review.user_id != session['user_id'] and User.query.get(session['user_id']).admin != 2:
+        return jsonify({'success': False}), 403
+    db.session.delete(review)
+    db.session.commit()
+    return jsonify({'success': True})
+
 @app.route('/')
 def index():
-    all_books = Book.query.order_by(Book.id.desc()).all()
-    return render_template('index.html', books=all_books)
+    page = request.args.get('page', 1, type=int)
+    pagination = Book.query.order_by(Book.id.desc()).paginate(page=page, per_page=9, error_out=False)
+    return render_template('index.html', books=pagination.items, pagination=pagination)
 
 @app.route('/book/<int:book_id>')
 def book_detail(book_id):
@@ -196,6 +269,10 @@ def profile_page():
 def regulamin_page():
     return render_template('regulamin.html')
 
+@app.route('/tos')
+def tos_page():
+    return render_template('tos.html')
+
 @app.route('/search')
 def search_results():
     phrase = request.args.get('fraza', '').strip()
@@ -207,7 +284,7 @@ def search_results():
             Author.surname.ilike(f"%{phrase}%")
         )
     )
-    pagination = query.paginate(page=page, per_page=10, error_out=False)
+    pagination = query.paginate(page=page, per_page=9, error_out=False)
     return render_template('index.html', books=pagination.items, phrase=phrase, pagination=pagination)
 
 @app.route('/api/check_login')

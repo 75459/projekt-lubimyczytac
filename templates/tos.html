@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-3xl p-8 border border-border-main shadow-soft space-y-6">
+        <div>
+            <h1 class="text-3xl font-bold text-fg-main tracking-tight">Warunki Prywatności i Zasady Korzystania (ToS)</h1>
+            <p class="text-sm text-muted-fg mt-2">Ostatnia aktualizacja: 23 maja 2026 r.</p>
+        </div>
+
+        <div class="space-y-4 text-sm text-fg-main leading-relaxed">
+            <section class="bg-slate-50 p-5 rounded-2xl border border-border-main/80">
+                <h3 class="font-bold text-base mb-2">1. Przetwarzanie Danych Osobowych</h3>
+                <p>Wszelkie dane wprowadzane podczas rejestracji (login, e-mail, nazwa użytkownika) są przetwarzane wyłącznie na potrzeby realizacji projektu semestralnego i demonstracji funkcjonalności akademickiej aplikacji.</p>
+            </section>
+
+            <section class="bg-slate-50 p-5 rounded-2xl border border-border-main/80">
+                <h3 class="font-bold text-base mb-2">2. Bezpieczeństwo i Pliki Cookies</h3>
+                <p>Aplikacja wykorzystuje mechanizm sesji (cookies) w celu utrzymania stanu zalogowania użytkownika. Dane dostępowe i hasła podlegają jednostronnemu szyfrowaniu kryptograficznemu przed zapisem w strukturach bazy danych.</p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

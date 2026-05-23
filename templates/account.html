@@ -108,6 +108,20 @@
                     </div>
                 </div>
 
+                <div class="mt-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="accept_terms" name="accept_terms" required
+                               class="mt-0.5 h-4 w-4 rounded border-border-main text-primary focus:ring-primary cursor-pointer shrink-0 transition-all">
+                        <label for="accept_terms" class="text-xs font-medium text-muted-fg leading-tight select-none cursor-pointer">
+                            Przeczytałem i akceptuję
+                            <a href="/regulamin" class="text-link-color underline hover:text-primary font-semibold transition-colors" onclick="event.stopPropagation()">regulamin strony</a>
+                            oraz
+                            <a href="/tos" class="text-link-color underline hover:text-primary font-semibold transition-colors" onclick="event.stopPropagation()">warunki prywatności</a>.
+                        </label>
+                    </div>
+                    <span class="error-warning text-red-500 text-xs hidden mt-1.5 block font-medium">Musisz zaakceptować warunki, aby się zarejestrować!</span>
+                </div>
+
                 <button type="submit" id="regSubmitBtn" class="w-full h-11 bg-gradient-to-tl from-slate-700 to-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 transition-opacity cursor-pointer shadow-soft-sm pt-0.5">
                     Zarejestruj konto
                 </button>
@@ -121,9 +135,16 @@
                     Wysłaliśmy 6-znakowy kod weryfikacyjny na adres:<br>
                     <strong id="displayTargetEmail" class="text-fg-main font-bold break-all block mt-1 text-sm bg-slate-50 p-2 rounded-xl border border-border-main">mail@example.com</strong>
                 </p>
-                <p class="text-[11px] text-amber-600 font-semibold mt-2 flex items-center gap-1 justify-center md:justify-start">
-                    ⚠️ W razie braku wiadomości, sprawdź folder SPAM.
-                </p>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mt-4 mb-2 text-blue-800 text-left shadow-sm">
+                    <h3 class="font-bold text-sm mb-1 flex items-center gap-1.5">
+                        <span class="text-lg">💡</span> Tryb demonstracyjny
+                    </h3>
+                    <p class="text-xs leading-relaxed">
+                        Aplikacja działa w trybie testowym na potrzeby projektu semestralnego. Nie musisz czekać na maila – <strong>wpisz jakikolwiek losowy ciąg znaków</strong> (np. 123456), aby od razu przejść dalej!
+                    </p>
+                </div>
+
             </div>
 
             <form action="/verify_code" method="POST" id="otpSubmitForm" class="space-y-6 m-0" novalidate>
@@ -285,10 +306,15 @@
 
     document.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', function () {
-            this.classList.remove('border-2', 'border-red-500');
+            // Usuwamy czerwone błędy z pół tekstowych oraz checkboxów
+            this.classList.remove('border-2', 'border-red-500', 'ring-2', 'ring-red-500', 'ring-offset-1');
             if (this.classList.contains('otp-field')) this.style.borderColor = '#6b8fa3';
 
-            const warningMsg = this.id === 'regPassword' ? this.closest('.relative').nextElementSibling : this.nextElementSibling;
+            // Zabezpieczenie szukające komunikatu z błędem w odpowiednim miejscu
+            let warningMsg = this.nextElementSibling;
+            if (this.id === 'regPassword') warningMsg = this.closest('.relative').nextElementSibling;
+            if (this.type === 'checkbox') warningMsg = this.closest('.flex').nextElementSibling;
+
             if (warningMsg && warningMsg.classList.contains('error-warning')) {
                 warningMsg.classList.add('hidden');
             }
@@ -301,10 +327,21 @@
         const requiredInputs = form.querySelectorAll('[required]:not(.otp-field)');
 
         requiredInputs.forEach(input => {
-            const warningMsg = input.id === 'regPassword' ? input.closest('.relative').nextElementSibling : input.nextElementSibling;
+            // Ustalenie gdzie leży tekst błędu na podstawie typu inputa
+            let warningMsg = input.nextElementSibling;
+            if (input.id === 'regPassword') warningMsg = input.closest('.relative').nextElementSibling;
+            if (input.type === 'checkbox') warningMsg = input.closest('.flex').nextElementSibling;
+
             let isFieldInvalid = false;
 
-            if (!input.value.trim()) {
+            // Walidacja dla checkboxa
+            if (input.type === 'checkbox') {
+                if (!input.checked) {
+                    isFieldInvalid = true;
+                    if (warningMsg) warningMsg.textContent = "Akceptacja warunków jest obowiązkowa!";
+                }
+                // Walidacja dla pozostałych pól tekstowych
+            } else if (!input.value.trim()) {
                 isFieldInvalid = true;
                 if (warningMsg) warningMsg.textContent = "Wypełnij wartość!";
             } else if (input.id === 'regEmail' || input.id === 'resetEmailField') {
@@ -329,8 +366,15 @@
                 }
             }
 
+            // Wyświetlenie odpowiednich błędów
             if (isFieldInvalid) {
-                input.classList.add('border-2', 'border-red-500');
+                if (input.type === 'checkbox') {
+                    // Czerwona poświata (glow) z Tailwinda dla checkboxa
+                    input.classList.add('ring-2', 'ring-red-500', 'ring-offset-1');
+                } else {
+                    // Czerwona ramka dla zwykłych pół 
+                    input.classList.add('border-2', 'border-red-500');
+                }
                 if (warningMsg) warningMsg.classList.remove('hidden');
                 isValid = false;
             }
