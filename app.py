@@ -196,6 +196,52 @@ def submit_review(book_id):
         'role': user_role
     })
 
+@app.route('/api/site_review', methods=['POST'])
+@rate_limited(seconds=3)
+def submit_site_review():
+    if 'user_id' not in session: 
+        return jsonify({'success': False, 'message': 'Zaloguj się, aby dodać opinię.'}), 401
+    
+    data = request.json
+    rating = data.get('rating', 0)
+    comment = data.get('comment', '').strip()[:255]
+    
+    if not (1 <= rating <= 5): 
+        return jsonify({'success': False, 'message': 'Ocena musi wynosić od 1 do 5 gwiazdek.'}), 400
+    if check_profanity(comment): 
+        return jsonify({'success': False, 'message': 'Komentarz zawiera niedozwolone słownictwo!'}), 400
+    
+    # Szukamy opinii, która NIE ma powiązania w review_position
+    review = Review.query.outerjoin(review_position).filter(
+        Review.user_id == session['user_id'],
+        review_position.c.book_id == None
+    ).first()
+    
+    if review:
+        review.stars = rating
+        review.comment = comment
+        db.session.commit()
+        review_id = review.id
+    else:
+        # Zapisujemy recenzję BEZ dodawania jej do tabeli łączącej
+        review = Review(user_id=session['user_id'], stars=rating, comment=comment)
+        db.session.add(review)
+        db.session.flush()
+        db.session.commit()
+        review_id = review.id
+    
+    user_obj = User.query.get(session['user_id'])
+    user_role = "Czytelnik"
+    if user_obj.admin == 1: user_role = "Moderator"
+    elif user_obj.admin == 2: user_role = "Administrator"
+    
+    return jsonify({
+        'success': True, 
+        'review_id': review_id,
+        'user': user_obj.username,
+        'role': user_role
+    })
+
 @app.route('/api/review/<int:review_id>', methods=['DELETE'])
 @rate_limited(seconds=2)
 def delete_review(review_id):
@@ -211,7 +257,10 @@ def delete_review(review_id):
 def index():
     page = request.args.get('page', 1, type=int)
     pagination = Book.query.order_by(Book.id.desc()).paginate(page=page, per_page=9, error_out=False)
-    return render_template('index.html', books=pagination.items, pagination=pagination)
+    
+    site_reviews = Review.query.outerjoin(review_position).filter(review_position.c.book_id == None).order_by(Review.id.desc()).all()
+    
+    return render_template('index.html', books=pagination.items, pagination=pagination, site_reviews=site_reviews)
 
 @app.route('/book/<int:book_id>')
 def book_detail(book_id):
@@ -293,7 +342,11 @@ def search_results():
         )
     )
     pagination = query.paginate(page=page, per_page=9, error_out=False)
-    return render_template('index.html', books=pagination.items, phrase=phrase, pagination=pagination)
+    
+    # Tutaj również dodajemy opinie o serwisie, by nie zniknęły po wyszukaniu
+    site_reviews = Review.query.outerjoin(review_position).filter(review_position.c.book_id == None).order_by(Review.id.desc()).all()
+    
+    return render_template('index.html', books=pagination.items, phrase=phrase, pagination=pagination, site_reviews=site_reviews)
 
 @app.route('/api/check_login')
 def check_login():
