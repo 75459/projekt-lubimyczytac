@@ -247,7 +247,7 @@
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="text-sm font-medium block mb-1">Data pub.</label>
-                        <input type="date" name="pub_date" class="w-full h-10 px-3 bg-card-cream rounded-xl border border-border-main text-sm" required>
+                        <input type="date" name="pub_date" min="1000-01-01" max="2099-12-31" class="w-full h-10 px-3 bg-card-cream rounded-xl border border-border-main text-sm" required>
                         <span class="text-red-500 text-xs hidden mt-1">Wypełnij!</span>
                     </div>
                     <div>
@@ -433,6 +433,13 @@
                 } else if (input.name === 'pages_number' && parseInt(input.value) <= 0) {
                     isFieldInvalid = true;
                     if (warningMsg) warningMsg.textContent = "Musi być większa niż 0!";
+                } else if (input.name === 'pub_date') {
+                    // Blokada abstrakcyjnych lat (np. 121421421)
+                    const year = new Date(input.value).getFullYear();
+                    if (year < 1000 || year > 2099) {
+                        isFieldInvalid = true;
+                        if (warningMsg) warningMsg.textContent = "Podaj poprawny rok (1000-2099)!";
+                    }
                 }
 
                 if (isFieldInvalid) {

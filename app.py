@@ -182,10 +182,18 @@ def submit_review(book_id):
         db.session.commit()
         review_id = review.id
     
+    user_obj = User.query.get(session['user_id'])
+    user_role = "Czytelnik"
+    if user_obj.admin == 1:
+        user_role = "Moderator"
+    elif user_obj.admin == 2:
+        user_role = "Administrator"
+
     return jsonify({
         'success': True, 
         'review_id': review_id,
-        'user': User.query.get(session['user_id']).username
+        'user': user_obj.username,
+        'role': user_role
     })
 
 @app.route('/api/review/<int:review_id>', methods=['DELETE'])
@@ -393,16 +401,14 @@ def register():
     if User.query.filter((User.login == login) | (User.mail == mail) | (User.username == username)).first():
         return jsonify({"success": False, "message": "Dane są już zajęte!"}), 400
 
-    code = generate_mixed_code()
     hashed_pw = generate_password_hash(password, method='scrypt')
 
-    new_user = User(login=login, username=username, mail=mail, password=hashed_pw, is_active=False, temp_code=code)
+    new_user = User(login=login, username=username, mail=mail, password=hashed_pw, is_active=False, temp_code=None)
     db.session.add(new_user)
     db.session.commit()
 
     session['verify_email'] = mail
     session['verify_purpose'] = 'register'
-    print(f"[DEMO SANDBOX] Kod rejestracji dla {mail}: {code}")
     return jsonify({"success": True})
 
 @app.route('/reset_password_request', methods=['POST'])
@@ -414,13 +420,9 @@ def reset_password_request():
     if not user:
         return jsonify({"success": False, "message": "Nie znaleziono takiego adresu e-mail!"}), 404
 
-    code = generate_mixed_code()
-    user.temp_code = code
-    db.session.commit()
 
     session['verify_email'] = mail
     session['verify_purpose'] = 'reset'
-    print(f"[DEMO SANDBOX] Kod resetu dla {mail}: {code}")
     return jsonify({"success": True})
 
 @app.route('/verify_code', methods=['POST'])
@@ -513,11 +515,9 @@ def resend_verification_code():
     if not user:
         return jsonify({"success": False, "message": "Nie znaleziono użytkownika."}), 404
     
-    code = generate_mixed_code()
-    user.temp_code = code
-    db.session.commit()
-    print(f"[DEMO SANDBOX] Ponowne wysłanie kodu dla {mail}: {code}")
+    # Symulacja wysłania - nic nie robimy z bazą i konsolą
     return jsonify({"success": True})
+
 # ==========================================
 # AKCJE INTEGRACYJNE Z BAZĄ DANYCH (CRUD - ADMIN = 2)
 # ==========================================
